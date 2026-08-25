@@ -16,9 +16,17 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import CONF_HOST, DOMAIN
 from .coordinator import BirdNetGoCoordinator
+
+
+def _parse_timestamp(data: dict) -> object:
+    """device_class=TIMESTAMP requires a real datetime, not the ISO string
+    BirdNET-Go returns — a plain string leaves the sensor 'unavailable'."""
+    raw = data.get("last_detection_time")
+    return dt_util.parse_datetime(raw) if raw else None
 
 # All entities enabled by default — nothing hidden behind "show disabled entities".
 # The two image URLs (last_detection_image, top_species_thumbnail) are exposed as
@@ -51,7 +59,7 @@ SENSOR_DESCRIPTIONS: tuple[BirdNetGoSensorDescription, ...] = (
         key="last_detection_time",
         translation_key="last_detection_time",
         device_class=SensorDeviceClass.TIMESTAMP,
-        value_fn=lambda d: d.get("last_detection_time"),
+        value_fn=_parse_timestamp,
     ),
     BirdNetGoSensorDescription(
         key="last_detection_confidence",
