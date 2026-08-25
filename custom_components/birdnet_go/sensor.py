@@ -23,10 +23,14 @@ from .coordinator import BirdNetGoCoordinator
 
 
 def _parse_timestamp(data: dict) -> object:
-    """device_class=TIMESTAMP requires a real datetime, not the ISO string
-    BirdNET-Go returns — a plain string leaves the sensor 'unavailable'."""
+    """Parse BirdNET-Go's ISO timestamp string into a real datetime.
+
+    device_class=TIMESTAMP requires a real datetime, not the ISO string
+    BirdNET-Go returns — a plain string leaves the sensor 'unavailable'.
+    """
     raw = data.get("last_detection_time")
     return dt_util.parse_datetime(raw) if raw else None
+
 
 # All entities enabled by default — nothing hidden behind "show disabled entities".
 # The two image URLs (last_detection_image, top_species_thumbnail) are exposed as
@@ -147,6 +151,7 @@ class BirdNetGoSensor(CoordinatorEntity[BirdNetGoCoordinator], SensorEntity):
         entry: ConfigEntry,
         description: BirdNetGoSensorDescription,
     ) -> None:
+        """Initialize the sensor for one coordinator.data key."""
         super().__init__(coordinator)
         self.entity_description = description
         self._attr_unique_id = f"{entry.entry_id}_{description.key}"
@@ -160,4 +165,5 @@ class BirdNetGoSensor(CoordinatorEntity[BirdNetGoCoordinator], SensorEntity):
 
     @property
     def native_value(self):
+        """Return the current value from coordinator.data for this sensor."""
         return self.entity_description.value_fn(self.coordinator.data)

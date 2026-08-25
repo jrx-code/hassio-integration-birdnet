@@ -34,13 +34,16 @@ async def async_setup_entry(
     async_add_entities([BirdNetGoStatusSensor(coordinator, entry)])
 
 
-class BirdNetGoStatusSensor(CoordinatorEntity[BirdNetGoCoordinator], BinarySensorEntity):
+class BirdNetGoStatusSensor(
+    CoordinatorEntity[BirdNetGoCoordinator], BinarySensorEntity
+):
     """Reflects whether the last REST/SSE contact with BirdNET-Go succeeded."""
 
     entity_description = STATUS_DESCRIPTION
     _attr_has_entity_name = True
 
     def __init__(self, coordinator: BirdNetGoCoordinator, entry: ConfigEntry) -> None:
+        """Initialize the connectivity binary sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry.entry_id}_status"
         self._attr_device_info = DeviceInfo(
@@ -53,4 +56,5 @@ class BirdNetGoStatusSensor(CoordinatorEntity[BirdNetGoCoordinator], BinarySenso
 
     @property
     def is_on(self) -> bool:
+        """Return True while the last REST/SSE contact with BirdNET-Go succeeded."""
         return bool(self.coordinator.data.get("available"))

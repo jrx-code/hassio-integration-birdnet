@@ -10,6 +10,10 @@ involved:
 
 Either path calls `async_set_updated_data()` so entities update on whichever
 happens first.
+
+The actual payload → field mapping lives in `parsing.py` as plain functions —
+this module is just the async plumbing (HTTP, SSE, coordinator lifecycle)
+around them.
 """
 
 from __future__ import annotations
@@ -18,19 +22,17 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timedelta
-from urllib.parse import quote
 from typing import Any
 
 import aiohttp
 from aiohttp import ClientTimeout
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 
 from .const import (
     API_PATH_DAILY,
-    API_PATH_MEDIA_IMAGE,
     API_PATH_RECENT,
     API_PATH_STREAM,
     API_PATH_SUMMARY,
@@ -40,6 +42,12 @@ from .const import (
     SSE_CONNECT_TIMEOUT,
     SSE_RECONNECT_MAX,
     SSE_RECONNECT_MIN,
+)
+from .parsing import (
+    daily_to_fields,
+    detection_to_fields,
+    parse_sse_detection,
+    summary_to_fields,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -68,6 +76,7 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Coordinator polling REST stats and streaming SSE detections."""
 
     def __init__(self, hass: HomeAssistant, host: str, verify_ssl: bool) -> None:
+        """Initialize the coordinator for the given BirdNET-Go host."""
         super().__init__(
             hass,
             _LOGGER,
@@ -77,7 +86,9 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._host = host.rstrip("/")
         self._base_url = f"https://{self._host}"
         self._verify_ssl = verify_ssl
-        self._session: aiohttp.ClientSession = async_get_clientsession(hass, verify_ssl=verify_ssl)
+        self._session: aiohttp.ClientSession = async_get_clientsession(
+            hass, verify_ssl=verify_ssl
+        )
         self.data: dict[str, Any] = _empty_data()
 
         self._sse_task: asyncio.Task | None = None
@@ -90,22 +101,29 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         data = dict(self.data)
         try:
-            data.update(await self._fetch_daily())
+            data.update(
+                daily_to_fields(await self._get_json(API_PATH_DAILY), self._base_url)
+            )
 
-            now = datetime.utcnow()
+            now = dt_util.utcnow()
             if (
                 self._last_summary_fetch is None
-                or (now - self._last_summary_fetch).total_seconds() >= SCAN_INTERVAL_SUMMARY
+                or (now - self._last_summary_fetch).total_seconds()
+                >= SCAN_INTERVAL_SUMMARY
             ):
-                data.update(await self._fetch_summary())
+                data.update(summary_to_fields(await self._get_json(API_PATH_SUMMARY)))
                 self._last_summary_fetch = now
 
             if data.get("last_detection") is None:
-                data.update(await self._fetch_recent())
+                recent = await self._get_json(API_PATH_RECENT, params={"limit": 1})
+                if recent:
+                    data.update(detection_to_fields(recent[0], self._base_url))
 
             data["available"] = True
-        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
-            raise UpdateFailed(f"BirdNET-Go host {self._host} unreachable: {err}") from err
+        except (TimeoutError, aiohttp.ClientError) as err:
+            raise UpdateFailed(
+                f"BirdNET-Go host {self._host} unreachable: {err}"
+            ) from err
         return data
 
     async def _get_json(self, path: str, params: dict[str, Any] | None = None) -> Any:
@@ -117,58 +135,9 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             resp.raise_for_status()
             return await resp.json()
 
-    async def _fetch_daily(self) -> dict[str, Any]:
-        payload = await self._get_json(API_PATH_DAILY)
-        if not payload:
-            return {"detections_today": 0, "species_today": 0}
-
-        detections_today = sum(item.get("count", 0) for item in payload)
-        top = max(payload, key=lambda item: item.get("count", 0))
-        return {
-            "detections_today": detections_today,
-            "species_today": len(payload),
-            "top_species": top.get("common_name"),
-            "top_species_scientific": top.get("scientific_name"),
-            "top_species_count": top.get("count"),
-            "top_species_thumbnail": (
-                f"{self._base_url}{top['thumbnail_url']}" if top.get("thumbnail_url") else None
-            ),
-        }
-
-    async def _fetch_summary(self) -> dict[str, Any]:
-        payload = await self._get_json(API_PATH_SUMMARY)
-        if not payload:
-            return {"total_species": 0, "total_detections": 0}
-        return {
-            "total_species": len(payload),
-            "total_detections": sum(item.get("count", 0) for item in payload),
-        }
-
-    async def _fetch_recent(self) -> dict[str, Any]:
-        payload = await self._get_json(API_PATH_RECENT, params={"limit": 1})
-        if not payload:
-            return {}
-        return self._detection_to_fields(payload[0])
-
     # ------------------------------------------------------------------
     # SSE push
     # ------------------------------------------------------------------
-
-    def _detection_to_fields(self, detection: dict[str, Any]) -> dict[str, Any]:
-        scientific = detection.get("scientificName")
-        return {
-            "last_detection": detection.get("commonName"),
-            "last_detection_scientific": scientific,
-            "last_detection_confidence": (
-                round(detection["confidence"] * 100) if detection.get("confidence") is not None else None
-            ),
-            "last_detection_time": detection.get("timestamp"),
-            "last_detection_image": (
-                f"{self._base_url}{API_PATH_MEDIA_IMAGE}{quote(scientific)}"
-                if scientific
-                else None
-            ),
-        }
 
     def start_sse(self) -> None:
         """Start the background SSE listener task."""
@@ -178,6 +147,7 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
 
     async def stop_sse(self) -> None:
+        """Cancel the background SSE listener task, if running."""
         if self._sse_task is not None:
             self._sse_task.cancel()
             self._sse_task = None
@@ -224,15 +194,11 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except json.JSONDecodeError:
             return
 
-        detection = payload
-        if isinstance(payload, dict) and "detection" in payload:
-            detection = payload["detection"]
-        if isinstance(detection, list):
-            detection = detection[0] if detection else None
-        if not isinstance(detection, dict) or "commonName" not in detection:
+        detection = parse_sse_detection(payload)
+        if detection is None:
             return  # connection-confirmation / heartbeat message, not a detection
 
         new_data = dict(self.data)
-        new_data.update(self._detection_to_fields(detection))
+        new_data.update(detection_to_fields(detection, self._base_url))
         new_data["available"] = True
         self.async_set_updated_data(new_data)

@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] — 2026-08-25
+
+Preparing for a HACS default-repository submission — no functional/entity changes.
+
+### Added
+- `parsing.py` — the BirdNET-Go payload → entity-field mapping extracted into
+  plain functions with no `homeassistant` import, so it's testable without
+  the full HA test harness
+- `tests/test_parsing.py` — 19 unit tests covering it (empty payloads, missing
+  keys, the percent-encoding regression from 1.2.0, SSE payload shapes)
+- `pyproject.toml` — Ruff configured with the same ruleset Home Assistant
+  core uses for its own integrations; `ruff`/`pytest` CI jobs
+- Docstrings on all public methods (was passing hassfest/HACS without them,
+  but `ruff check` against HA's own ruleset flagged the gaps)
+
+### Changed
+- `coordinator.py` no longer contains any payload-shaping logic — it's pure
+  async plumbing (HTTP/SSE/coordinator lifecycle) around `parsing.py`
+- `datetime.utcnow()` → `dt_util.utcnow()` (HA's own helper; `utcnow()` is
+  deprecated and returns a naive datetime)
+
 ## [1.2.0] — 2026-08-25
 
 ### Added

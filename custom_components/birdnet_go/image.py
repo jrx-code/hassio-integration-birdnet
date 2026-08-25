@@ -66,6 +66,7 @@ class BirdNetGoImage(CoordinatorEntity[BirdNetGoCoordinator], ImageEntity):
         entry: ConfigEntry,
         description: ImageEntityDescription,
     ) -> None:
+        """Initialize the image entity for one coordinator.data URL key."""
         CoordinatorEntity.__init__(self, coordinator)
         ImageEntity.__init__(
             self,
@@ -91,17 +92,22 @@ class BirdNetGoImage(CoordinatorEntity[BirdNetGoCoordinator], ImageEntity):
 
     @property
     def image_url(self) -> str | None:
+        """Return the current BirdNET-Go picture URL, from the coordinator."""
         return self._last_url
 
     @property
     def image_last_updated(self) -> datetime | None:
+        """Return when the current picture URL last changed."""
         return self._last_updated
 
     @property
     def extra_state_attributes(self) -> dict[str, str | None]:
-        """Expose the raw BirdNET-Go URL — HA's own image_url is proxied
-        (/api/image_proxy/... + access token), not directly fetchable by
-        external services (e.g. a WhatsApp/notification integration)."""
+        """Expose the raw BirdNET-Go URL as an entity attribute.
+
+        HA's own image_url is proxied (/api/image_proxy/... + access token),
+        not directly fetchable by external services (e.g. a WhatsApp/
+        notification integration).
+        """
         return {"source_url": self._last_url}
 
     @callback

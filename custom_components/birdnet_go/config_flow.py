@@ -8,7 +8,6 @@ from typing import Any
 import aiohttp
 import voluptuous as vol
 from aiohttp import ClientTimeout
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -48,7 +47,7 @@ async def _test_connection(hass, host: str, verify_ssl: bool) -> str | None:
         return "ssl_error"
     except (aiohttp.ClientError, TimeoutError):
         return "cannot_connect"
-    except Exception:  # noqa: BLE001
+    except Exception:
         _LOGGER.exception("Unexpected error probing BirdNET-Go")
         return "unknown"
     return None
@@ -62,6 +61,7 @@ class BirdNetGoConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
+        """Handle the (only) step: host + verify_ssl, probed before creating the entry."""
         errors: dict[str, str] = {}
 
         if user_input is not None:

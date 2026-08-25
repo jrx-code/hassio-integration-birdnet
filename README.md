@@ -1,6 +1,8 @@
 # BirdNET-Go — Home Assistant Integration
 
 [![Validate](https://github.com/jrx-code/hassio-integration-birdnet/actions/workflows/validate.yml/badge.svg)](https://github.com/jrx-code/hassio-integration-birdnet/actions/workflows/validate.yml)
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![GitHub release](https://img.shields.io/github/v/release/jrx-code/hassio-integration-birdnet)](https://github.com/jrx-code/hassio-integration-birdnet/releases)
 
 A custom Home Assistant integration for [BirdNET-Go](https://github.com/tphakala/birdnet-go). Connects **directly to your BirdNET-Go host** over REST + SSE — no MQTT broker required.
 
@@ -53,6 +55,12 @@ Then: **Settings → Devices & Services → Add Integration → "BirdNET-Go"** (
 <p align="center">
   <img src="docs/screenshots/add-integration-picker.png" width="60%" alt="Add integration search — brand icon in the picker">
 </p>
+
+## Quality
+
+- `custom_components/birdnet_go/parsing.py` — the payload → entity-field mapping — is deliberately plain Python with **no `homeassistant` import**, so it's unit-testable without the full HA test harness. `tests/test_parsing.py` (19 tests) covers it, run with `pytest tests/`.
+- Linted with [Ruff](https://docs.astral.sh/ruff/) against the same ruleset Home Assistant core uses for its own integrations (`pyproject.toml`).
+- CI (`.github/workflows/validate.yml`): Hassfest, HACS validation, Ruff, pytest — all required to pass on every push/PR.
 
 ## Localization
 
