@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "BirdNET-Go",
+        "description": "Połączenie bezpośrednio z hostem BirdNET-Go (REST + SSE, bez brokera MQTT).",
+        "data": {
+          "host": "Host",
+          "verify_ssl": "Weryfikuj certyfikat SSL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Nie można połączyć się z BirdNET-Go pod tym hostem.",
+      "ssl_error": "Weryfikacja certyfikatu SSL nie powiodła się.",
+      "unknown": "Nieoczekiwany błąd."
+    },
+    "abort": {
+      "already_configured": "Ten host BirdNET-Go jest już skonfigurowany."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_detection": { "name": "Ostatnie wykrycie" },
+      "last_detection_scientific": { "name": "Ostatnie wykrycie — nazwa naukowa" },
+      "last_detection_time": { "name": "Czas ostatniego wykrycia" },
+      "last_detection_confidence": { "name": "Pewność ostatniego wykrycia" },
+      "detections_today": { "name": "Wykrycia dzisiaj" },
+      "species_today": { "name": "Gatunki dzisiaj" },
+      "top_species": { "name": "Najczęstszy gatunek" },
+      "top_species_scientific": { "name": "Najczęstszy gatunek — nazwa naukowa" },
+      "top_species_count": { "name": "Liczba wykryć najczęstszego gatunku" },
+      "total_species": { "name": "Gatunki łącznie" },
+      "total_detections": { "name": "Wykrycia łącznie" }
+    },
+    "binary_sensor": {
+      "status": { "name": "Status" }
+    },
+    "image": {
+      "last_detection_image": { "name": "Zdjęcie ostatniego wykrycia" },
+      "top_species_thumbnail": { "name": "Miniatura najczęstszego gatunku" }
+    }
+  }
+}
