@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] — 2026-08-25
+
+### Changed
+- All entities now enabled by default (previously the scientific-name and
+  image-URL sensors were disabled by default)
+- `last_detection_image` / `top_species_thumbnail` moved from URL-string
+  sensors to proper `image` platform entities (`image.py`) — HA fetches and
+  proxies the picture itself instead of the frontend loading the URL
+  directly
+
 ## [1.0.0] — 2026-08-25
 
 ### Added

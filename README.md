@@ -14,17 +14,23 @@ BirdNET-Go has built-in MQTT auto-discovery (since nightly-20260111), but that's
   - REST polling every 5 min (`/api/v2/analytics/species/daily`) and every hour (`/api/v2/analytics/species/summary`)
   - a background task reading `/api/v2/detections/stream` (SSE), reconnecting with exponential backoff (5s→120s), calling `async_set_updated_data()` on every new detection
 - **`config_flow.py`** — add via the UI: host + verify SSL, validated against `GET /api/v2/detections/recent?limit=1`
-- **`sensor.py`** / **`binary_sensor.py`** — a single "BirdNET-Go" device with 13 sensors + 1 connectivity binary_sensor
+- **`sensor.py`** / **`binary_sensor.py`** / **`image.py`** — a single "BirdNET-Go" device with 11 sensors, 2 image entities, 1 connectivity binary_sensor
+
+All entities are enabled by default — nothing hidden behind "show disabled entities".
 
 ## Entities
 
 | Entity | Source |
 |---|---|
-| `sensor.birdnet_go_last_detection` (+ scientific name, time, confidence, image) | SSE push |
+| `sensor.birdnet_go_last_detection` (+ scientific name, time, confidence) | SSE push |
 | `sensor.birdnet_go_detections_today` / `species_today` | REST, every 5 min |
-| `sensor.birdnet_go_top_species` (+ scientific name, count, thumbnail) | REST, every 5 min |
+| `sensor.birdnet_go_top_species` (+ scientific name, count) | REST, every 5 min |
 | `sensor.birdnet_go_total_species` / `total_detections` | REST, hourly |
+| `image.birdnet_go_last_detection_image` | SSE push |
+| `image.birdnet_go_top_species_thumbnail` | REST, every 5 min |
 | `binary_sensor.birdnet_go_status` | connectivity — last REST/SSE contact succeeded |
+
+The two `image` entities are HA's proper `image` platform, not a URL-string sensor — HA fetches and caches the picture itself and serves it back through its own `/api/image_proxy/...` endpoint, so it stays reachable even when the browser has no direct network path to the BirdNET-Go host.
 
 ## Installation
 

@@ -25,18 +25,20 @@
       "last_detection_scientific": { "name": "Last detection scientific name" },
       "last_detection_time": { "name": "Last detection time" },
       "last_detection_confidence": { "name": "Last detection confidence" },
-      "last_detection_image": { "name": "Last detection image" },
       "detections_today": { "name": "Detections today" },
       "species_today": { "name": "Species today" },
       "top_species": { "name": "Top species" },
       "top_species_scientific": { "name": "Top species scientific name" },
       "top_species_count": { "name": "Top species count" },
-      "top_species_thumbnail": { "name": "Top species thumbnail" },
       "total_species": { "name": "Total species" },
       "total_detections": { "name": "Total detections" }
     },
     "binary_sensor": {
       "status": { "name": "Status" }
+    },
+    "image": {
+      "last_detection_image": { "name": "Last detection image" },
+      "top_species_thumbnail": { "name": "Top species thumbnail" }
     }
   }
 }

@@ -20,6 +20,12 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import CONF_HOST, DOMAIN
 from .coordinator import BirdNetGoCoordinator
 
+# All entities enabled by default — nothing hidden behind "show disabled entities".
+# The two image URLs (last_detection_image, top_species_thumbnail) are exposed as
+# proper `image` platform entities instead (see image.py) — HA proxies/caches the
+# picture itself there, so they stay reachable even when the viewer's browser has
+# no direct network path to the BirdNET-Go host.
+
 
 @dataclass(frozen=True, kw_only=True)
 class BirdNetGoSensorDescription(SensorEntityDescription):
@@ -39,7 +45,6 @@ SENSOR_DESCRIPTIONS: tuple[BirdNetGoSensorDescription, ...] = (
         key="last_detection_scientific",
         translation_key="last_detection_scientific",
         icon="mdi:format-quote-close",
-        entity_registry_enabled_default=False,
         value_fn=lambda d: d.get("last_detection_scientific"),
     ),
     BirdNetGoSensorDescription(
@@ -55,13 +60,6 @@ SENSOR_DESCRIPTIONS: tuple[BirdNetGoSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:percent",
         value_fn=lambda d: d.get("last_detection_confidence"),
-    ),
-    BirdNetGoSensorDescription(
-        key="last_detection_image",
-        translation_key="last_detection_image",
-        icon="mdi:image",
-        entity_registry_enabled_default=False,
-        value_fn=lambda d: d.get("last_detection_image"),
     ),
     BirdNetGoSensorDescription(
         key="detections_today",
@@ -89,7 +87,6 @@ SENSOR_DESCRIPTIONS: tuple[BirdNetGoSensorDescription, ...] = (
         key="top_species_scientific",
         translation_key="top_species_scientific",
         icon="mdi:format-quote-close",
-        entity_registry_enabled_default=False,
         value_fn=lambda d: d.get("top_species_scientific"),
     ),
     BirdNetGoSensorDescription(
@@ -99,13 +96,6 @@ SENSOR_DESCRIPTIONS: tuple[BirdNetGoSensorDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         icon="mdi:counter",
         value_fn=lambda d: d.get("top_species_count"),
-    ),
-    BirdNetGoSensorDescription(
-        key="top_species_thumbnail",
-        translation_key="top_species_thumbnail",
-        icon="mdi:image",
-        entity_registry_enabled_default=False,
-        value_fn=lambda d: d.get("top_species_thumbnail"),
     ),
     BirdNetGoSensorDescription(
         key="total_species",
