@@ -8,6 +8,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -20,7 +21,7 @@ STATUS_DESCRIPTION = BinarySensorEntityDescription(
     key="status",
     translation_key="status",
     device_class=BinarySensorDeviceClass.CONNECTIVITY,
-    entity_category="diagnostic",
+    entity_category=EntityCategory.DIAGNOSTIC,
 )
 
 

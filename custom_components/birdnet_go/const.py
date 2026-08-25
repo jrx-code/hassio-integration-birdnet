@@ -2,7 +2,25 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+from typing import Final
+
 DOMAIN = "birdnet_go"
+
+_MANIFEST = json.loads((Path(__file__).parent / "manifest.json").read_text())
+INTEGRATION_VERSION: Final[str] = _MANIFEST.get("version", "0.0.0")
+
+# Frontend card, auto-registered as a Lovelace resource (see frontend/__init__.py)
+# — no manual "add resource" step for the user.
+FRONTEND_URL_BASE: Final[str] = "/birdnet_go_frontend"
+FRONTEND_JS_MODULES: Final[list[dict[str, str]]] = [
+    {
+        "name": "BirdNET-Go Card",
+        "filename": "birdnet-go-card.js",
+        "version": INTEGRATION_VERSION,
+    },
+]
 
 CONF_HOST = "host"
 CONF_VERIFY_SSL = "verify_ssl"

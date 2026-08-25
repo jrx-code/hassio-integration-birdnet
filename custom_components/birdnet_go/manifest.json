@@ -3,10 +3,11 @@
   "name": "BirdNET-Go",
   "codeowners": ["@jrx-code"],
   "config_flow": true,
+  "dependencies": ["frontend", "http", "lovelace"],
   "documentation": "https://github.com/jrx-code/hassio-integration-birdnet",
   "integration_type": "device",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/jrx-code/hassio-integration-birdnet/issues",
   "requirements": [],
-  "version": "1.3.0"
+  "version": "1.4.1"
 }

@@ -41,6 +41,21 @@ All entities are enabled by default — nothing hidden behind "show disabled ent
 
 The two `image` entities are HA's proper `image` platform, not a URL-string sensor — HA fetches and caches the picture itself and serves it back through its own `/api/image_proxy/...` endpoint, so it stays reachable even when the browser has no direct network path to the BirdNET-Go host.
 
+## Card
+
+The integration ships its own Lovelace card — `custom_components/birdnet_go/frontend/birdnet-go-card.js` — and registers it as a frontend resource automatically on startup (storage-mode Lovelace; no manual "add resource" step). It's a plain custom element with no build step, so there's no separate JS toolchain to keep in sync with the Python side.
+
+```yaml
+type: custom:birdnet-go-card
+# device_id: <id>   # optional — only needed with more than one BirdNET-Go device
+```
+
+It finds its entities by scanning the entity registry for `platform: birdnet_go` and matching each one's `translation_key` — not by guessing entity_ids, so renaming entities or the device doesn't break it. (`unique_id` would have been the more obvious match target, but it isn't exposed on the frontend's entity registry snapshot at all.) No visual (GUI) editor; configure via the card picker's YAML/code editor.
+
+<p align="center">
+  <img src="docs/screenshots/birdnet-go-card.png" width="60%" alt="The bundled birdnet-go-card, rendered in a dashboard">
+</p>
+
 ## Installation
 
 ### HACS (custom repository)
