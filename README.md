@@ -4,6 +4,13 @@
 
 A custom Home Assistant integration for [BirdNET-Go](https://github.com/tphakala/birdnet-go). Connects **directly to your BirdNET-Go host** over REST + SSE — no MQTT broker required.
 
+<p align="center">
+  <img src="docs/screenshots/device-entities.png" width="49%" alt="Device page — all entities, live data, thumbnail">
+  <img src="docs/screenshots/config-flow.png" width="49%" alt="Add integration — host + verify SSL form">
+</p>
+
+Screenshots from a live install — real detection data (BirdNET-Go host redacted). Full UI, entity list and setup dialog automatically switch to your Home Assistant's language (English + Polish translations ship today, see [Localization](#localization)).
+
 ## Why no MQTT
 
 BirdNET-Go has built-in MQTT auto-discovery (since nightly-20260111), but that's still an indirect path: BirdNET-Go → broker → HA's MQTT integration → entities, with the broker as an extra dependency. BirdNET-Go's REST API v2 also exposes `GET /api/v2/detections/stream` — a public SSE endpoint (Server-Sent Events, no auth, rate-limited to 10 connections/min/IP) that pushes new detections the instant they happen. Combined with REST polling for the slower-moving stats, this integration talks to BirdNET-Go directly — one less moving part in the chain.
@@ -41,11 +48,19 @@ The two `image` entities are HA's proper `image` platform, not a URL-string sens
 ### Manual
 Copy `custom_components/birdnet_go/` into your HA `config/custom_components/`, restart.
 
-Then: **Settings → Devices & Services → Add Integration → "BirdNET-Go"**, enter your BirdNET-Go host (e.g. `192.168.1.50:8080` or a domain if you reverse-proxy it with HTTPS).
+Then: **Settings → Devices & Services → Add Integration → "BirdNET-Go"** (pictured above), enter your BirdNET-Go host (e.g. `192.168.1.50:8080` or a domain if you reverse-proxy it with HTTPS).
+
+<p align="center">
+  <img src="docs/screenshots/add-integration-picker.png" width="60%" alt="Add integration search — brand icon in the picker">
+</p>
+
+## Localization
+
+HA picks `translations/<lang>.json` by the user's own HA language setting — nothing to configure. Currently shipped: `en`, `pl`. Contributions for more languages welcome (PR against `custom_components/birdnet_go/translations/`, `strings.json` is the English source of truth).
 
 ## Status
 
-No screenshots yet — the integration hasn't been added to a live Home Assistant instance in this repo's history yet, so there's nothing real to show. `manifest.json`/`config_flow`/translations/brand assets are validated in CI (hassfest + HACS action, see badge at the top); functional testing against a live BirdNET-Go instance is still open.
+Running live against a real BirdNET-Go instance (screenshots above are from that install). `manifest.json`/`config_flow`/translations/brand assets are validated in CI (hassfest + HACS action, see badge at the top).
 
 ## License
 

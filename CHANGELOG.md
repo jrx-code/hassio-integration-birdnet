@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] — 2026-08-25
+
+### Added
+- Polish translation (`translations/pl.json`) — HA auto-selects it by the
+  user's language setting
+- `source_url` attribute on both `image` entities — the raw BirdNET-Go URL,
+  for external consumers (notifications, WhatsApp API, ...) that can't use
+  HA's authenticated `/api/image_proxy/...` link
+- Screenshots in README (device page, add-integration picker, config flow)
+
+### Fixed
+- `last_detection_time` was permanently stuck `unavailable` —
+  `device_class: timestamp` requires `native_value` to be a real
+  `datetime.datetime` with tzinfo, not the ISO string BirdNET-Go returns;
+  now parsed with `dt_util.parse_datetime()`
+- `last_detection_image` source URL wasn't percent-encoded (a raw space in
+  the scientific name produced an invalid URL)
+- Two orphaned entity-registry rows left over from the pre-1.1.0
+  URL-string sensors (`last_detection_image`, `top_species_thumbnail`)
+  removed via the WS API
+
 ## [1.1.0] — 2026-08-25
 
 ### Changed
