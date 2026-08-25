@@ -18,6 +18,7 @@ import asyncio
 import json
 import logging
 from datetime import datetime, timedelta
+from urllib.parse import quote
 from typing import Any
 
 import aiohttp
@@ -163,7 +164,9 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             ),
             "last_detection_time": detection.get("timestamp"),
             "last_detection_image": (
-                f"{self._base_url}{API_PATH_MEDIA_IMAGE}{scientific}" if scientific else None
+                f"{self._base_url}{API_PATH_MEDIA_IMAGE}{quote(scientific)}"
+                if scientific
+                else None
             ),
         }
 
