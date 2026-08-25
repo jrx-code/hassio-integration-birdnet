@@ -97,6 +97,13 @@ class BirdNetGoImage(CoordinatorEntity[BirdNetGoCoordinator], ImageEntity):
     def image_last_updated(self) -> datetime | None:
         return self._last_updated
 
+    @property
+    def extra_state_attributes(self) -> dict[str, str | None]:
+        """Expose the raw BirdNET-Go URL — HA's own image_url is proxied
+        (/api/image_proxy/... + access token), not directly fetchable by
+        external services (e.g. a WhatsApp/notification integration)."""
+        return {"source_url": self._last_url}
+
     @callback
     def _handle_coordinator_update(self) -> None:
         url = self._current_url()
