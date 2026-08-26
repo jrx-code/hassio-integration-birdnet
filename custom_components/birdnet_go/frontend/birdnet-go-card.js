@@ -15,9 +15,11 @@
  * configured, pass `device_id` in the card config to pick one; otherwise
  * the first one found is used.
  *
- * No visual (GUI) config editor — configure via YAML/code editor in the
- * card picker. For a card this small that's a reasonable trade-off, not
- * an oversight: nothing here needs more than an optional `device_id`.
+ * Visual (GUI) config editor via `getConfigElement()` — a single `ha-form`
+ * bound to a device selector scoped to the `birdnet_go` integration, since
+ * the only config field is the optional `device_id`. `ha-form` and the
+ * `device` selector are both loaded by the frontend already; no import
+ * needed here, just use the custom element by tag name.
  */
 
 class BirdnetGoCard extends HTMLElement {
@@ -40,6 +42,10 @@ class BirdnetGoCard extends HTMLElement {
 
   static getStubConfig() {
     return {};
+  }
+
+  static getConfigElement() {
+    return document.createElement("birdnet-go-card-editor");
   }
 
   _resolveEntities(hass) {
@@ -270,6 +276,64 @@ class BirdnetGoCard extends HTMLElement {
 }
 
 customElements.define("birdnet-go-card", BirdnetGoCard);
+
+/**
+ * Config editor for `birdnet-go-card`. Single field (`device_id`), so a
+ * bare `ha-form` with a device selector scoped to this integration is all
+ * that's needed — no per-field custom markup.
+ */
+class BirdnetGoCardEditor extends HTMLElement {
+  setConfig(config) {
+    this._config = config || {};
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    this._render();
+  }
+
+  _schema() {
+    return [
+      {
+        name: "device_id",
+        selector: { device: { filter: { integration: "birdnet_go" } } },
+      },
+    ];
+  }
+
+  _computeLabel(schema) {
+    if (schema.name === "device_id") return "BirdNET-Go device (optional)";
+    return schema.name;
+  }
+
+  _render() {
+    if (!this._hass || !this._config) return;
+
+    if (!this._form) {
+      this._form = document.createElement("ha-form");
+      this._form.addEventListener("value-changed", (ev) => {
+        ev.stopPropagation();
+        this._config = ev.detail.value;
+        this.dispatchEvent(
+          new CustomEvent("config-changed", {
+            detail: { config: this._config },
+            bubbles: true,
+            composed: true,
+          })
+        );
+      });
+      this.appendChild(this._form);
+    }
+
+    this._form.hass = this._hass;
+    this._form.data = this._config;
+    this._form.schema = this._schema();
+    this._form.computeLabel = this._computeLabel;
+  }
+}
+
+customElements.define("birdnet-go-card-editor", BirdnetGoCardEditor);
 
 window.customCards = window.customCards || [];
 window.customCards.push({
