@@ -48,8 +48,11 @@ The integration ships its own Lovelace card — `custom_components/birdnet_go/fr
 ```yaml
 type: custom:birdnet-go-card
 preset: simple   # basic | simple | advanced | nerd | custom (default: simple)
+layout: stacked  # stacked | overlay (default: stacked)
 # device_id: <id>   # optional — only needed with more than one BirdNET-Go device
 ```
+
+`preset` controls **what** shows:
 
 | Preset | Shows |
 |---|---|
@@ -59,7 +62,14 @@ preset: simple   # basic | simple | advanced | nerd | custom (default: simple)
 | `nerd` | + all-time known-species count |
 | `custom` | Pick each of the eight `show_*` fields yourself in the editor |
 
-It finds its entities by scanning the entity registry for `platform: birdnet_go` and matching each one's `translation_key` — not by guessing entity_ids, so renaming entities or the device doesn't break it. (`unique_id` would have been the more obvious match target, but it isn't exposed on the frontend's entity registry snapshot at all.) Has a visual (GUI) editor — device dropdown + preset picker, with individual toggles once "Custom" is selected — alongside the YAML/code editor in the card picker.
+`layout` controls **how it's arranged**, independent of preset — any preset can combine with either:
+
+| Layout | Arrangement |
+|---|---|
+| `stacked` (default) | Name/scientific/badges below the photo |
+| `overlay` | Name/scientific as a gradient-scrim caption *on* the photo; confidence/time as corner badges over it. Falls back to `stacked` if there's no photo to overlay onto. |
+
+It finds its entities by scanning the entity registry for `platform: birdnet_go` and matching each one's `translation_key` — not by guessing entity_ids, so renaming entities or the device doesn't break it. (`unique_id` would have been the more obvious match target, but it isn't exposed on the frontend's entity registry snapshot at all.) Has a visual (GUI) editor — device dropdown + layout/preset pickers, with individual toggles once "Custom" is selected — alongside the YAML/code editor in the card picker.
 
 <p align="center">
   <img src="docs/screenshots/birdnet-go-card.png" width="60%" alt="The bundled birdnet-go-card, rendered in a dashboard">

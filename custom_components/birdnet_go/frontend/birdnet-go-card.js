@@ -15,13 +15,21 @@
  * configured, pass `device_id` in the card config to pick one; otherwise
  * the first one found is used.
  *
- * Layout is preset-driven (`config.preset`): basic/simple/advanced/nerd
+ * What shows is preset-driven (`config.preset`): basic/simple/advanced/nerd
  * each turn a fixed set of `show_*` booleans on, so most people never touch
  * an individual toggle. Picking "custom" in the editor unlocks the
  * individual `show_*` fields for fine control. Presets aren't persisted
  * into the saved config — only `preset` (+ overrides when it's "custom")
  * is, so a later preset addition/tweak here applies retroactively to any
  * card still on a named preset.
+ *
+ * How it's arranged is a separate, orthogonal knob: `config.layout`.
+ * "stacked" (default) is name/scientific/badges below the photo. "overlay"
+ * puts name/scientific/status as a gradient-scrim caption directly on the
+ * photo (poster style) and confidence/time as corner badges over it —
+ * independent of which preset is active, so e.g. "nerd + overlay" is a
+ * valid combination. Falls back to stacked whenever there's no photo to
+ * overlay onto (image hidden, or none downloaded yet).
  *
  * Visual (GUI) config editor via `getConfigElement()` — `ha-form` with a
  * device selector plus the preset/toggle schema below. `ha-form`, `ha-icon`
@@ -114,7 +122,7 @@ class BirdnetGoCard extends HTMLElement {
   }
 
   static getStubConfig() {
-    return { preset: "simple" };
+    return { preset: "simple", layout: "stacked" };
   }
 
   static getConfigElement() {
@@ -124,13 +132,15 @@ class BirdnetGoCard extends HTMLElement {
   // Named preset → fixed flags; "custom" → preset fields with the user's
   // per-toggle overrides layered on top, so a half-filled custom config
   // (only some `show_*` keys set) still has sane defaults for the rest.
+  // `layout` rides along unchanged — it's independent of preset.
   _effectiveConfig() {
     const config = this._config || {};
     const preset = config.preset || "simple";
+    const layout = config.layout === "overlay" ? "overlay" : "stacked";
     if (preset !== "custom") {
-      return PRESETS[preset] || PRESETS.simple;
+      return { ...(PRESETS[preset] || PRESETS.simple), layout };
     }
-    const merged = { ...PRESETS.simple };
+    const merged = { ...PRESETS.simple, layout };
     for (const field of TOGGLE_FIELDS) {
       if (typeof config[field] === "boolean") merged[field] = config[field];
     }
@@ -272,44 +282,71 @@ class BirdnetGoCard extends HTMLElement {
     const scientific = this._text("last_detection_scientific", "");
     const confidence = this._text("last_detection_confidence", null);
     const time = this._time("last_detection_time");
+    // Overlay needs an actual photo to lay text over — falls back to
+    // stacked when the image is hidden or hasn't loaded yet.
+    const overlay = cfg.layout === "overlay" && !!imgUrl;
 
-    const metaChips = [];
-    if (cfg.show_confidence && confidence) {
-      metaChips.push(`<span class="bng-chip"><ha-icon icon="mdi:target"></ha-icon>${this._escape(confidence)}%</span>`);
-    }
-    if (cfg.show_time) {
-      metaChips.push(`<span class="bng-chip"><ha-icon icon="mdi:clock-outline"></ha-icon>${time}</span>`);
-    }
+    const statusPill = cfg.show_status
+      ? `<span class="bng-status-pill ${online ? "bng-online" : "bng-offline"}">
+           <ha-icon icon="${online ? "mdi:wifi" : "mdi:wifi-off"}"></ha-icon>
+           ${online ? "online" : "offline"}
+         </span>`
+      : "";
+    const confidenceChip =
+      cfg.show_confidence && confidence
+        ? `<span class="bng-chip"><ha-icon icon="mdi:target"></ha-icon>${this._escape(confidence)}%</span>`
+        : "";
+    const timeChip = cfg.show_time
+      ? `<span class="bng-chip"><ha-icon icon="mdi:clock-outline"></ha-icon>${time}</span>`
+      : "";
+    const metaChips = confidenceChip + timeChip;
 
-    this.innerHTML = `
-      <ha-card>
-        ${
-          cfg.show_image
-            ? `<div class="bng-picture${imgUrl ? "" : " bng-no-image"}"
-                    ${imgUrl ? `style="background-image:url(${imgUrl})"` : ""}
-                    data-action="open-image">
-                 ${imgUrl ? "" : '<ha-icon icon="mdi:image-off-outline"></ha-icon>'}
-               </div>`
-            : ""
-        }
-        <div class="bng-body">
-          <div class="bng-headline" data-action="open-detection">
-            <span class="bng-name">${this._escape(name)}</span>
-            ${
-              cfg.show_status
-                ? `<span class="bng-status-pill ${online ? "bng-online" : "bng-offline"}">
-                     <ha-icon icon="${online ? "mdi:wifi" : "mdi:wifi-off"}"></ha-icon>
-                     ${online ? "online" : "offline"}
-                   </span>`
-                : ""
-            }
+    let pictureHtml = "";
+    let headerHtml = "";
+
+    if (cfg.show_image && overlay) {
+      pictureHtml = `
+        <div class="bng-picture bng-overlay" style="background-image:url(${imgUrl})" data-action="open-image">
+          ${
+            metaChips || statusPill
+              ? `<div class="bng-overlay-top">
+                   <div class="bng-meta">${metaChips}</div>
+                   ${statusPill}
+                 </div>`
+              : ""
+          }
+          <div class="bng-overlay-caption" data-action="open-detection">
+            <div class="bng-name">${this._escape(name)}</div>
+            ${cfg.show_scientific && scientific ? `<div class="bng-scientific">${this._escape(scientific)}</div>` : ""}
           </div>
-          ${cfg.show_scientific && scientific ? `<div class="bng-scientific">${this._escape(scientific)}</div>` : ""}
-          ${metaChips.length ? `<div class="bng-meta">${metaChips.join("")}</div>` : ""}
-          ${this._renderStats(cfg)}
-          ${this._renderTopSpecies(cfg)}
+        </div>`;
+    } else if (cfg.show_image) {
+      pictureHtml = `
+        <div class="bng-picture${imgUrl ? "" : " bng-no-image"}"
+             ${imgUrl ? `style="background-image:url(${imgUrl})"` : ""}
+             data-action="open-image">
+          ${imgUrl ? "" : '<ha-icon icon="mdi:image-off-outline"></ha-icon>'}
+        </div>`;
+    }
+
+    if (!overlay) {
+      headerHtml = `
+        <div class="bng-headline" data-action="open-detection">
+          <span class="bng-name">${this._escape(name)}</span>
+          ${statusPill}
         </div>
-      </ha-card>`;
+        ${cfg.show_scientific && scientific ? `<div class="bng-scientific">${this._escape(scientific)}</div>` : ""}
+        ${metaChips ? `<div class="bng-meta">${metaChips}</div>` : ""}`;
+    }
+
+    const statsHtml = this._renderStats(cfg);
+    const topSpeciesHtml = this._renderTopSpecies(cfg);
+    const bodyHtml =
+      headerHtml || statsHtml || topSpeciesHtml
+        ? `<div class="bng-body">${headerHtml}${statsHtml}${topSpeciesHtml}</div>`
+        : "";
+
+    this.innerHTML = `<ha-card>${pictureHtml}${bodyHtml}</ha-card>`;
     this._ensureStyle();
   }
 
@@ -339,6 +376,61 @@ class BirdnetGoCard extends HTMLElement {
         color: var(--secondary-text-color);
       }
       .bng-picture.bng-no-image ha-icon { --mdc-icon-size: 32px; }
+      .bng-picture.bng-overlay {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .bng-picture.bng-overlay::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          to top,
+          rgba(0, 0, 0, 0.8) 0%,
+          rgba(0, 0, 0, 0.35) 40%,
+          rgba(0, 0, 0, 0) 75%
+        );
+        pointer-events: none;
+      }
+      .bng-overlay-top {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 10px;
+      }
+      .bng-overlay-top .bng-meta { margin-top: 0; }
+      .bng-overlay-top .bng-chip {
+        color: #fff;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(2px);
+      }
+      .bng-overlay-top .bng-status-pill.bng-online {
+        color: #fff;
+        background: rgba(76, 175, 80, 0.85);
+      }
+      .bng-overlay-top .bng-status-pill.bng-offline {
+        color: #fff;
+        background: rgba(60, 60, 60, 0.6);
+      }
+      .bng-overlay-caption {
+        position: relative;
+        z-index: 1;
+        padding: 10px 14px 14px;
+        cursor: pointer;
+      }
+      .bng-overlay-caption .bng-name {
+        color: #fff;
+        text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+      }
+      .bng-overlay-caption .bng-scientific {
+        color: rgba(255, 255, 255, 0.88);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+      }
       .bng-body { padding: 12px 16px 16px; }
       .bng-headline {
         display: flex;
@@ -510,7 +602,7 @@ customElements.define("birdnet-go-card", BirdnetGoCard);
  */
 class BirdnetGoCardEditor extends HTMLElement {
   setConfig(config) {
-    this._config = { preset: "simple", ...(config || {}) };
+    this._config = { preset: "simple", layout: "stacked", ...(config || {}) };
     this._render();
   }
 
@@ -522,6 +614,18 @@ class BirdnetGoCardEditor extends HTMLElement {
   _schema() {
     const schema = [
       { name: "device_id", selector: { device: { filter: { integration: "birdnet_go" } } } },
+      {
+        name: "layout",
+        selector: {
+          select: {
+            mode: "list",
+            options: [
+              { value: "stacked", label: "Stacked — text below the photo" },
+              { value: "overlay", label: "Overlay — caption on the photo" },
+            ],
+          },
+        },
+      },
       {
         name: "preset",
         selector: {
@@ -557,7 +661,8 @@ class BirdnetGoCardEditor extends HTMLElement {
   _computeLabel(schema) {
     const labels = {
       device_id: "BirdNET-Go device (optional)",
-      preset: "Layout preset",
+      layout: "Photo caption style",
+      preset: "Information preset",
       show_image: "Last detection photo",
       show_scientific: "Scientific name",
       show_confidence: "Confidence badge",

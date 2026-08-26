@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.7.0] — 2026-08-26
+
+### Added
+- `birdnet-go-card` new `layout` config field, independent of `preset`:
+  **Stacked** (default, unchanged) has name/scientific/badges below the
+  photo; **Overlay** puts them as a gradient-scrim caption directly on the
+  photo (poster style), with confidence/time as corner badges over the
+  image and the connectivity pill top-right. Any preset can combine with
+  either layout (e.g. "Nerd + Overlay"). Falls back to stacked whenever
+  there's no photo to overlay onto (image hidden, or none loaded yet).
+- Editor: "Photo caption style" selector (Stacked/Overlay), shown
+  regardless of preset, right above the preset picker.
+
 ## [1.6.0] — 2026-08-26
 
 ### Added
