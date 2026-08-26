@@ -1,0 +1,87 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "BirdNET-Go",
+        "description": "Anslut direkt till BirdNET-Go-värden (REST + SSE, ingen MQTT-broker krävs).",
+        "data": {
+          "host": "Värd",
+          "verify_ssl": "Verifiera SSL-certifikat"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan inte ansluta till BirdNET-Go på den här värden.",
+      "ssl_error": "Verifiering av SSL-certifikat misslyckades.",
+      "unknown": "Oväntat fel."
+    },
+    "abort": {
+      "already_configured": "Denna BirdNET-Go-värd är redan konfigurerad."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_detection": { "name": "Senaste detektering" },
+      "last_detection_scientific": { "name": "Senaste detektering vetenskapligt namn" },
+      "last_detection_time": { "name": "Senaste detektering tid" },
+      "last_detection_confidence": { "name": "Senaste detektering konfidens" },
+      "detections_today": { "name": "Detekteringar i dag" },
+      "species_today": { "name": "Arter i dag" },
+      "top_species": { "name": "Topparter" },
+      "top_species_scientific": { "name": "Topparter vetenskapligt namn" },
+      "top_species_count": { "name": "Topparter antal" },
+      "total_species": { "name": "Totalt antal arter" },
+      "total_detections": { "name": "Totalt antal detekteringar" }
+    },
+    "binary_sensor": {
+      "status": { "name": "Status" }
+    },
+    "image": {
+      "last_detection_image": { "name": "Senaste detektering bild" },
+      "top_species_thumbnail": { "name": "Topparter miniatyrbild" }
+    }
+  }
+}{
+  "config": {
+    "step": {
+      "user": {
+        "title": "BirdNET-Go",
+        "description": "Anslut direkt till BirdNET-Go-värden (REST + SSE, ingen MQTT-broker krävs).",
+        "data": {
+          "host": "Värd",
+          "verify_ssl": "Verifiera SSL-certifikat"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan inte ansluta till BirdNET-Go på den här värden.",
+      "ssl_error": "Verifiering av SSL-certifikat misslyckades.",
+      "unknown": "Oväntat fel."
+    },
+    "abort": {
+      "already_configured": "Denna BirdNET-Go-värd är redan konfigurerad."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_detection": { "name": "Senaste detektering" },
+      "last_detection_scientific": { "name": "Senaste detektering vetenskapligt namn" },
+      "last_detection_time": { "name": "Senaste detektering tid" },
+      "last_detection_confidence": { "name": "Senaste detektering konfidens" },
+      "detections_today": { "name": "Detekteringar i dag" },
+      "species_today": { "name": "Arter i dag" },
+      "top_species": { "name": "Topparter" },
+      "top_species_scientific": { "name": "Topparter vetenskapligt namn" },
+      "top_species_count": { "name": "Topparter antal" },
+      "total_species": { "name": "Totalt antal arter" },
+      "total_detections": { "name": "Totalt antal detekteringar" }
+    },
+    "binary_sensor": {
+      "status": { "name": "Status" }
+    },
+    "image": {
+      "last_detection_image": { "name": "Senaste detektering bild" },
+      "top_species_thumbnail": { "name": "Topparter miniatyrbild" }
+    }
+  }
+}
