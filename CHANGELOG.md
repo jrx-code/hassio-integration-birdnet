@@ -15,6 +15,13 @@ All notable changes to this project will be documented in this file.
 - Editor: "Photo caption style" selector (Stacked/Overlay), shown
   regardless of preset, right above the preset picker.
 
+Verified live on PVE VM 103 (`HA-inpost-dev`, 192.168.18.178) via HACS
+(custom repository → download v1.7.0 → restart): Nerd preset + Overlay
+layout rendered correctly on a real detection (Kopciuszek, 42%) — name
+and scientific name as a gradient-scrim caption on the photo, confidence
+and time as corner chips, ONLINE pill top-right; stats row and
+top-species section unaffected below.
+
 ## [1.6.0] — 2026-08-26
 
 ### Added
