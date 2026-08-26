@@ -31,6 +31,18 @@
  * valid combination. Falls back to stacked whenever there's no photo to
  * overlay onto (image hidden, or none downloaded yet).
  *
+ * Three more layouts — "sylwetka", "tabliczka", "pasek" — are compact,
+ * fixed-height tile designs, not a caption treatment of the normal body:
+ * they replace header/stats/top-species entirely with a single small block
+ * (see `_renderTile`). Tuned against a real detection photo in a standalone
+ * POC (`ptaki-trzy.html`, panel-salon-sekcje, 2026-08-26) and ported here at
+ * the values that POC settled on — bleed/fade/thumbnail-size/gap are fixed
+ * per layout, not exposed as card config, same as overlay's scrim isn't.
+ * The POC's saturation/brightness sliders aren't ported: those existed to
+ * tame a generic Wikimedia stock illustration used while tuning, and don't
+ * apply to a real BirdNET-Go detection photo. Like overlay, each falls back
+ * to stacked whenever there's no photo (image hidden, or none yet).
+ *
  * Visual (GUI) config editor via `getConfigElement()` — `ha-form` with a
  * device selector plus the preset/toggle schema below. `ha-form`, `ha-icon`
  * and the `device` selector are all loaded by the frontend already; no
@@ -82,6 +94,11 @@ const PRESETS = {
 
 const TOGGLE_FIELDS = Object.keys(PRESETS.simple);
 
+// Fixed-height tile layouts — see the class doc comment above for what
+// they are and why the POC's photo-tinting sliders aren't ported.
+const TILE_LAYOUTS = ["sylwetka", "tabliczka", "pasek"];
+const TILE_HEIGHT = 190; // px — the POC's tuned "wys" default
+
 class BirdnetGoCard extends HTMLElement {
   constructor() {
     super();
@@ -114,6 +131,9 @@ class BirdnetGoCard extends HTMLElement {
 
   getCardSize() {
     const cfg = this._effectiveConfig();
+    if (TILE_LAYOUTS.includes(cfg.layout)) {
+      return Math.max(1, Math.round(TILE_HEIGHT / 56)); // fixed-height tile, ~56px/row
+    }
     let size = 1;
     if (cfg.show_image) size += 3;
     if (cfg.show_stats || cfg.show_total_species) size += 1;
@@ -136,7 +156,9 @@ class BirdnetGoCard extends HTMLElement {
   _effectiveConfig() {
     const config = this._config || {};
     const preset = config.preset || "simple";
-    const layout = config.layout === "overlay" ? "overlay" : "stacked";
+    const layout = ["overlay", ...TILE_LAYOUTS].includes(config.layout)
+      ? config.layout
+      : "stacked";
     if (preset !== "custom") {
       return { ...(PRESETS[preset] || PRESETS.simple), layout };
     }
@@ -260,6 +282,68 @@ class BirdnetGoCard extends HTMLElement {
       </div>`;
   }
 
+  // The three tile layouts. Each reuses the preset's existing show_* flags
+  // for content (no new config fields) and bakes in the POC's tuned
+  // bleed/thumbnail/gap values as fixed layout constants — see the class
+  // doc comment for why. No top-species section here: these are compact
+  // single-detection tiles, same scope as the POC they came from.
+  _renderTile(cfg, layout, d) {
+    const metaParts = [];
+    if (cfg.show_confidence && d.confidence) metaParts.push(`${this._escape(d.confidence)}%`);
+    if (cfg.show_time) metaParts.push(d.time);
+    const metaHtml = metaParts.length ? `<div class="bng-tile-meta">${metaParts.join(" · ")}</div>` : "";
+    const counterHtml = cfg.show_stats
+      ? `<div class="bng-tile-counter">${this._escape(this._text("detections_today", "0"))} today · ${this._escape(
+          this._text("species_today", "0")
+        )} species</div>`
+      : "";
+    const dotHtml = cfg.show_status
+      ? `<span class="bng-tile-dot ${d.online ? "bng-tile-dot-on" : "bng-tile-dot-off"}"></span>`
+      : "";
+    const nameHtml = (size) => `<div class="bng-tile-name" style="font-size:${size}px">${this._escape(d.name)}</div>`;
+    const sciHtml = (size) =>
+      cfg.show_scientific && d.scientific
+        ? `<div class="bng-tile-scientific" style="font-size:${size}px">${this._escape(d.scientific)}</div>`
+        : "";
+
+    if (layout === "sylwetka") {
+      // Photo bleeds off the right edge, masked to fade into the card
+      // background — the text column sits where the fade has taken over.
+      return `
+        <div class="bng-tile bng-tile-sylwetka" data-action="open-detection">
+          <img class="bng-tile-photo bng-tile-photo-bleed" src="${d.imgUrl}" alt="">
+          <div class="bng-tile-sylwetka-text">
+            <div class="bng-tile-label">${dotHtml}<span>Last heard</span></div>
+            ${nameHtml(18)}${sciHtml(12)}${metaHtml}
+            <div class="bng-tile-divider"></div>
+            ${counterHtml}
+          </div>
+        </div>`;
+    }
+    if (layout === "tabliczka") {
+      // Rounded-square thumbnail beside a left-aligned text column.
+      return `
+        <div class="bng-tile bng-tile-tabliczka" data-action="open-detection">
+          <img class="bng-tile-photo bng-tile-photo-plaque" src="${d.imgUrl}" alt="">
+          <div class="bng-tile-tabliczka-text">
+            <div class="bng-tile-label">${dotHtml}<span>BirdNET</span></div>
+            ${nameHtml(17)}${sciHtml(12)}
+            <div class="bng-tile-divider"></div>
+            ${metaHtml}${counterHtml}
+          </div>
+        </div>`;
+    }
+    // pasek — circular thumbnail beside a right-aligned text column.
+    return `
+      <div class="bng-tile bng-tile-pasek" data-action="open-detection">
+        <img class="bng-tile-photo bng-tile-photo-bar" src="${d.imgUrl}" alt="">
+        <div class="bng-tile-pasek-text">
+          <div class="bng-tile-label bng-tile-label-right">${dotHtml}<span>Last heard</span></div>
+          ${nameHtml(16)}${sciHtml(11)}${metaHtml}${counterHtml}
+        </div>
+      </div>`;
+  }
+
   _render() {
     if (!this._entityIds || Object.keys(this._entityIds).length === 0) {
       this.innerHTML = `
@@ -282,9 +366,23 @@ class BirdnetGoCard extends HTMLElement {
     const scientific = this._text("last_detection_scientific", "");
     const confidence = this._text("last_detection_confidence", null);
     const time = this._time("last_detection_time");
-    // Overlay needs an actual photo to lay text over — falls back to
+    // Overlay and the tile layouts all need an actual photo — fall back to
     // stacked when the image is hidden or hasn't loaded yet.
     const overlay = cfg.layout === "overlay" && !!imgUrl;
+    const tile = TILE_LAYOUTS.includes(cfg.layout) && cfg.show_image && !!imgUrl;
+
+    if (tile) {
+      this.innerHTML = `<ha-card>${this._renderTile(cfg, cfg.layout, {
+        name,
+        scientific,
+        confidence,
+        time,
+        online,
+        imgUrl,
+      })}</ha-card>`;
+      this._ensureStyle();
+      return;
+    }
 
     const statusPill = cfg.show_status
       ? `<span class="bng-status-pill ${online ? "bng-online" : "bng-offline"}">
@@ -584,6 +682,105 @@ class BirdnetGoCard extends HTMLElement {
         color: var(--secondary-text-color);
         margin-left: 1px;
       }
+      .bng-tile {
+        height: ${TILE_HEIGHT}px;
+        box-sizing: border-box;
+        cursor: pointer;
+      }
+      .bng-tile-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--secondary-text-color);
+      }
+      .bng-tile-label-right { justify-content: flex-end; }
+      .bng-tile-name {
+        font-weight: 500;
+        color: var(--primary-text-color);
+        text-transform: capitalize;
+      }
+      .bng-tile-scientific { font-style: italic; color: var(--secondary-text-color); }
+      .bng-tile-meta, .bng-tile-counter { font-size: 11px; color: var(--secondary-text-color); }
+      .bng-tile-divider { height: 1px; background: var(--divider-color); margin: 4px 0; }
+      .bng-tile-dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+      .bng-tile-dot-on {
+        background: var(--state-active-color, #4caf50);
+        box-shadow: 0 0 6px rgba(76, 175, 80, 0.7);
+      }
+      .bng-tile-dot-off { background: var(--state-unavailable-color, #9e9e9e); }
+      /* sylwetka — photo bleeds off the right edge, masked to fade into
+         the card background; the text column sits over the faded part. */
+      .bng-tile-sylwetka { position: relative; overflow: hidden; }
+      .bng-tile-sylwetka .bng-tile-photo-bleed {
+        position: absolute;
+        right: -22px;
+        top: 0;
+        height: 100%;
+        width: 62%;
+        object-fit: cover;
+        -webkit-mask-image: linear-gradient(270deg, #000 42%, transparent 100%);
+        mask-image: linear-gradient(270deg, #000 42%, transparent 100%);
+      }
+      .bng-tile-sylwetka-text {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        max-width: 64%;
+        box-sizing: border-box;
+        padding: 13px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+      }
+      /* tabliczka — rounded-square thumbnail beside left-aligned text. */
+      .bng-tile-tabliczka {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 13px;
+      }
+      .bng-tile-tabliczka .bng-tile-photo-plaque {
+        width: 92px;
+        height: 92px;
+        flex: none;
+        object-fit: cover;
+        border-radius: 10px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+      }
+      .bng-tile-tabliczka-text {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      /* pasek — circular thumbnail beside right-aligned text. */
+      .bng-tile-pasek {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        padding: 13px;
+      }
+      .bng-tile-pasek .bng-tile-photo-bar {
+        width: 84px;
+        height: 84px;
+        flex: none;
+        object-fit: cover;
+        border-radius: 50%;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+      }
+      .bng-tile-pasek-text {
+        flex: 1;
+        min-width: 0;
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
     `;
     this.appendChild(style);
   }
@@ -622,6 +819,9 @@ class BirdnetGoCardEditor extends HTMLElement {
             options: [
               { value: "stacked", label: "Stacked — text below the photo" },
               { value: "overlay", label: "Overlay — caption on the photo" },
+              { value: "sylwetka", label: "Silhouette — photo bleeds off the edge" },
+              { value: "tabliczka", label: "Plaque — rounded thumbnail beside text" },
+              { value: "pasek", label: "Bar — circular thumbnail, right-aligned text" },
             ],
           },
         },
@@ -661,7 +861,7 @@ class BirdnetGoCardEditor extends HTMLElement {
   _computeLabel(schema) {
     const labels = {
       device_id: "BirdNET-Go device (optional)",
-      layout: "Photo caption style",
+      layout: "Card layout",
       preset: "Information preset",
       show_image: "Last detection photo",
       show_scientific: "Scientific name",

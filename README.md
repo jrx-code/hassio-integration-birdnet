@@ -48,7 +48,7 @@ The integration ships its own Lovelace card — `custom_components/birdnet_go/fr
 ```yaml
 type: custom:birdnet-go-card
 preset: simple   # basic | simple | advanced | nerd | custom (default: simple)
-layout: stacked  # stacked | overlay (default: stacked)
+layout: stacked  # stacked | overlay | sylwetka | tabliczka | pasek (default: stacked)
 # device_id: <id>   # optional — only needed with more than one BirdNET-Go device
 ```
 
@@ -68,11 +68,22 @@ layout: stacked  # stacked | overlay (default: stacked)
 |---|---|
 | `stacked` (default) | Name/scientific/badges below the photo |
 | `overlay` | Name/scientific as a gradient-scrim caption *on* the photo; confidence/time as corner badges over it. Falls back to `stacked` if there's no photo to overlay onto. |
+| `sylwetka` (Silhouette) | Photo bleeds off the right edge, masked to fade into the card background; text sits over the faded part. Fixed-height compact tile — no top-species section. |
+| `tabliczka` (Plaque) | Rounded-square thumbnail beside a left-aligned text column. Same fixed-height tile as Silhouette. |
+| `pasek` (Bar) | Circular thumbnail beside a right-aligned text column. Same fixed-height tile as Silhouette. |
+
+The three tile layouts (Silhouette/Plaque/Bar) reuse the preset's existing toggles for content — no extra config fields — and bake in bleed/thumbnail-size/gap as fixed layout constants, tuned in a standalone POC against a real detection photo. Like `overlay`, each falls back to `stacked` whenever there's no photo (image hidden, or none loaded yet).
 
 It finds its entities by scanning the entity registry for `platform: birdnet_go` and matching each one's `translation_key` — not by guessing entity_ids, so renaming entities or the device doesn't break it. (`unique_id` would have been the more obvious match target, but it isn't exposed on the frontend's entity registry snapshot at all.) Has a visual (GUI) editor — device dropdown + layout/preset pickers, with individual toggles once "Custom" is selected — alongside the YAML/code editor in the card picker.
 
 <p align="center">
   <img src="docs/screenshots/birdnet-go-card.png" width="60%" alt="The bundled birdnet-go-card, rendered in a dashboard">
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/birdnet-go-card-silhouette.png" width="32%" alt="Silhouette layout — photo bleeding off the right edge">
+  <img src="docs/screenshots/birdnet-go-card-plaque.png" width="32%" alt="Plaque layout — rounded thumbnail beside text">
+  <img src="docs/screenshots/birdnet-go-card-bar.png" width="32%" alt="Bar layout — circular thumbnail, right-aligned text">
 </p>
 
 ## Installation

@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] — 2026-08-26
+
+### Added
+- `birdnet-go-card` three new `layout` values — **Silhouette**, **Plaque**,
+  **Bar** — compact fixed-height tile designs, not a caption treatment of
+  the normal body like `overlay`: they replace header/stats/top-species
+  entirely with a single small block. Silhouette bleeds the photo off the
+  right edge, masked to fade into the card background, with the text
+  column over the faded part. Plaque puts a rounded-square thumbnail
+  beside left-aligned text. Bar puts a circular thumbnail beside
+  right-aligned text. All three reuse the preset's existing `show_*`
+  toggles for content — no new config fields — and bake in
+  bleed/thumbnail-size/gap as fixed layout constants, tuned in a
+  standalone POC (`ptaki-trzy.html`) against a real detection photo. Like
+  `overlay`, each falls back to `stacked` whenever there's no photo (image
+  hidden, or none loaded yet).
+- Editor: three new options in the layout selector, alongside
+  Stacked/Overlay.
+
+Verified live on PVE VM 103 (`HA-inpost-dev`, 192.168.18.178): pushed the
+updated card file directly (no HACS re-download needed for a JS-only
+change), then all three layouts rendered correctly on a real detection
+(Kopciuszek, 45%) in the card's own config-editor live preview — photo
+bleed/fade, thumbnail shape/size, text alignment all as designed. Zero
+console errors.
+
 ## [1.7.0] — 2026-08-26
 
 ### Added
