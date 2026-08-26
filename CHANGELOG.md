@@ -34,6 +34,14 @@ All notable changes to this project will be documented in this file.
 - `getStubConfig()` now returns `{ preset: "simple" }` instead of `{}`, so
   a freshly added card explicitly shows what it defaults to.
 
+Verified live on PVE VM 103 (`HA-inpost-dev`, 192.168.18.178) via HACS
+(custom repository → download v1.6.0 → restart): editor shows the preset
+radio list plus live preview; Nerd preset rendered all four stats (incl.
+the 162 all-time known-species count) and the top-species-today
+mini-card with circular thumbnail on a real new detection (Kopciuszek,
+42% confidence); Custom correctly seeded all eight toggles from Nerd's
+values when switched into.
+
 ## [1.5.0] — 2026-08-26
 
 ### Added
