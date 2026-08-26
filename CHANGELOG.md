@@ -2,6 +2,38 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.6.0] — 2026-08-26
+
+### Added
+- `birdnet-go-card` layout presets: **Basic** (photo + name), **Simple**
+  (+ confidence/time badges, today/species/total stats — the previous
+  fixed layout, now the default), **Advanced** (+ connectivity pill, "top
+  species today" mini-section), **Nerd** (+ all-time known-species count).
+  Picking **Custom** in the editor unlocks eight individual `show_*`
+  toggles (image, scientific name, confidence, time, connectivity,
+  stats row, total-species count, top-species section) for people who
+  want a mix that doesn't match a named preset.
+- New optional entities surfaced when enabled: `sensor.birdnet_go_top_species`
+  (+ scientific name, count, thumbnail) in a dedicated card section, and
+  `sensor.birdnet_go_total_species` as a fourth stat.
+- Visual restyle: confidence/time as icon chips, connectivity as a colored
+  online/offline pill (was a plain dot), stat row got icons and dividers,
+  top-species section is a circular-thumbnail mini-card.
+- Editor UX: switching a card to "Custom" seeds the eight toggles from
+  whichever named preset was active, instead of starting blank; switching
+  back to a named preset drops the per-field overrides so the saved config
+  stays a minimal `{ preset, device_id }` for the common case.
+
+### Changed
+- Card rebuilds its full DOM on every render instead of patching individual
+  nodes — the preset/toggle-driven layout has too many structurally
+  different shapes (image or not, stats row or not, top-species section or
+  not) for incremental patching to stay simple and correct. A dedicated
+  delegated click listener (bound once in the constructor, not per render)
+  keeps more-info navigation working across rebuilds.
+- `getStubConfig()` now returns `{ preset: "simple" }` instead of `{}`, so
+  a freshly added card explicitly shows what it defaults to.
+
 ## [1.5.0] — 2026-08-26
 
 ### Added

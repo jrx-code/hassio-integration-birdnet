@@ -15,14 +15,82 @@
  * configured, pass `device_id` in the card config to pick one; otherwise
  * the first one found is used.
  *
- * Visual (GUI) config editor via `getConfigElement()` — a single `ha-form`
- * bound to a device selector scoped to the `birdnet_go` integration, since
- * the only config field is the optional `device_id`. `ha-form` and the
- * `device` selector are both loaded by the frontend already; no import
- * needed here, just use the custom element by tag name.
+ * Layout is preset-driven (`config.preset`): basic/simple/advanced/nerd
+ * each turn a fixed set of `show_*` booleans on, so most people never touch
+ * an individual toggle. Picking "custom" in the editor unlocks the
+ * individual `show_*` fields for fine control. Presets aren't persisted
+ * into the saved config — only `preset` (+ overrides when it's "custom")
+ * is, so a later preset addition/tweak here applies retroactively to any
+ * card still on a named preset.
+ *
+ * Visual (GUI) config editor via `getConfigElement()` — `ha-form` with a
+ * device selector plus the preset/toggle schema below. `ha-form`, `ha-icon`
+ * and the `device` selector are all loaded by the frontend already; no
+ * import needed here, just use the custom elements by tag name.
  */
 
+const PRESETS = {
+  basic: {
+    show_image: true,
+    show_scientific: false,
+    show_confidence: false,
+    show_time: false,
+    show_status: false,
+    show_stats: false,
+    show_total_species: false,
+    show_top_species: false,
+  },
+  simple: {
+    show_image: true,
+    show_scientific: true,
+    show_confidence: true,
+    show_time: true,
+    show_status: true,
+    show_stats: true,
+    show_total_species: false,
+    show_top_species: false,
+  },
+  advanced: {
+    show_image: true,
+    show_scientific: true,
+    show_confidence: true,
+    show_time: true,
+    show_status: true,
+    show_stats: true,
+    show_total_species: false,
+    show_top_species: true,
+  },
+  nerd: {
+    show_image: true,
+    show_scientific: true,
+    show_confidence: true,
+    show_time: true,
+    show_status: true,
+    show_stats: true,
+    show_total_species: true,
+    show_top_species: true,
+  },
+};
+
+const TOGGLE_FIELDS = Object.keys(PRESETS.simple);
+
 class BirdnetGoCard extends HTMLElement {
+  constructor() {
+    super();
+    // One delegated listener survives every _render() rebuilding the DOM —
+    // no per-render addEventListener/element churn to keep in sync.
+    this.addEventListener("click", (ev) => {
+      const el = ev.target.closest("[data-action]");
+      if (!el) return;
+      const actions = {
+        "open-image": "last_detection_image",
+        "open-detection": "last_detection",
+        "open-top-species": "top_species",
+      };
+      this._openMoreInfo(actions[el.dataset.action]);
+    });
+  }
+
   setConfig(config) {
     this._config = config || {};
     this._entityIds = null; // force re-resolution on config change
@@ -37,15 +105,36 @@ class BirdnetGoCard extends HTMLElement {
   }
 
   getCardSize() {
-    return 4;
+    const cfg = this._effectiveConfig();
+    let size = 1;
+    if (cfg.show_image) size += 3;
+    if (cfg.show_stats || cfg.show_total_species) size += 1;
+    if (cfg.show_top_species) size += 1;
+    return size;
   }
 
   static getStubConfig() {
-    return {};
+    return { preset: "simple" };
   }
 
   static getConfigElement() {
     return document.createElement("birdnet-go-card-editor");
+  }
+
+  // Named preset → fixed flags; "custom" → preset fields with the user's
+  // per-toggle overrides layered on top, so a half-filled custom config
+  // (only some `show_*` keys set) still has sane defaults for the rest.
+  _effectiveConfig() {
+    const config = this._config || {};
+    const preset = config.preset || "simple";
+    if (preset !== "custom") {
+      return PRESETS[preset] || PRESETS.simple;
+    }
+    const merged = { ...PRESETS.simple };
+    for (const field of TOGGLE_FIELDS) {
+      if (typeof config[field] === "boolean") merged[field] = config[field];
+    }
+    return merged;
   }
 
   _resolveEntities(hass) {
@@ -107,6 +196,60 @@ class BirdnetGoCard extends HTMLElement {
     this.dispatchEvent(event);
   }
 
+  _escape(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  _renderStats(cfg) {
+    const items = [];
+    if (cfg.show_stats) {
+      items.push({ icon: "mdi:calendar-today", value: this._text("detections_today", "0"), label: "today" });
+      items.push({ icon: "mdi:bird", value: this._text("species_today", "0"), label: "species" });
+      items.push({ icon: "mdi:counter", value: this._text("total_detections", "0"), label: "total" });
+    }
+    if (cfg.show_total_species) {
+      items.push({ icon: "mdi:format-list-bulleted-square", value: this._text("total_species", "0"), label: "known" });
+    }
+    if (!items.length) return "";
+    return `
+      <div class="bng-stats">
+        ${items
+          .map(
+            (s) => `
+          <div class="bng-stat">
+            <ha-icon icon="${s.icon}" class="bng-stat-icon"></ha-icon>
+            <div class="bng-stat-value">${this._escape(s.value)}</div>
+            <div class="bng-stat-label">${s.label}</div>
+          </div>`
+          )
+          .join("")}
+      </div>`;
+  }
+
+  _renderTopSpecies(cfg) {
+    if (!cfg.show_top_species) return "";
+    const name = this._text("top_species", "");
+    if (!name || name === "—") return "";
+    const scientific = this._text("top_species_scientific", "");
+    const count = this._text("top_species_count", "0");
+    const thumbUrl = this._state("top_species_thumbnail")?.attributes?.entity_picture;
+    return `
+      <div class="bng-top" data-action="open-top-species">
+        <div class="bng-top-thumb${thumbUrl ? "" : " bng-top-thumb-empty"}"
+             ${thumbUrl ? `style="background-image:url(${thumbUrl})"` : ""}>
+          ${thumbUrl ? "" : '<ha-icon icon="mdi:bird"></ha-icon>'}
+        </div>
+        <div class="bng-top-info">
+          <div class="bng-top-label">Top species today</div>
+          <div class="bng-top-name">${this._escape(name)}</div>
+          ${scientific ? `<div class="bng-top-scientific">${this._escape(scientific)}</div>` : ""}
+        </div>
+        <div class="bng-top-count">${this._escape(count)}<span>×</span></div>
+      </div>`;
+  }
+
   _render() {
     if (!this._entityIds || Object.keys(this._entityIds).length === 0) {
       this.innerHTML = `
@@ -120,79 +263,54 @@ class BirdnetGoCard extends HTMLElement {
       return;
     }
 
-    const imgState = this._state("last_detection_image");
-    const imgUrl = imgState?.attributes?.entity_picture;
+    const cfg = this._effectiveConfig();
+    const imgUrl = cfg.show_image
+      ? this._state("last_detection_image")?.attributes?.entity_picture
+      : null;
     const online = this._state("status")?.state === "on";
+    const name = this._text("last_detection");
+    const scientific = this._text("last_detection_scientific", "");
+    const confidence = this._text("last_detection_confidence", null);
+    const time = this._time("last_detection_time");
 
-    if (!this.querySelector("ha-card")) {
-      this.innerHTML = `
-        <ha-card>
-          <div class="bng-picture" part="picture"></div>
-          <div class="bng-body">
-            <div class="bng-headline">
-              <span class="bng-name"></span>
-              <span class="bng-dot" title="BirdNET-Go connectivity"></span>
-            </div>
-            <div class="bng-scientific"></div>
-            <div class="bng-meta">
-              <span class="bng-confidence"></span>
-              <span class="bng-time"></span>
-            </div>
-            <div class="bng-stats">
-              <div class="bng-stat">
-                <div class="bng-stat-value bng-detections-today"></div>
-                <div class="bng-stat-label">today</div>
-              </div>
-              <div class="bng-stat">
-                <div class="bng-stat-value bng-species-today"></div>
-                <div class="bng-stat-label">species</div>
-              </div>
-              <div class="bng-stat">
-                <div class="bng-stat-value bng-total-detections"></div>
-                <div class="bng-stat-label">total</div>
-              </div>
-            </div>
-          </div>
-        </ha-card>`;
-      this._ensureStyle();
-      this.querySelector(".bng-picture").addEventListener("click", () =>
-        this._openMoreInfo("last_detection_image")
-      );
-      this.querySelector(".bng-headline").addEventListener("click", () =>
-        this._openMoreInfo("last_detection")
-      );
+    const metaChips = [];
+    if (cfg.show_confidence && confidence) {
+      metaChips.push(`<span class="bng-chip"><ha-icon icon="mdi:target"></ha-icon>${this._escape(confidence)}%</span>`);
+    }
+    if (cfg.show_time) {
+      metaChips.push(`<span class="bng-chip"><ha-icon icon="mdi:clock-outline"></ha-icon>${time}</span>`);
     }
 
-    const pic = this.querySelector(".bng-picture");
-    pic.style.backgroundImage = imgUrl ? `url(${imgUrl})` : "none";
-    pic.classList.toggle("bng-no-image", !imgUrl);
-
-    this.querySelector(".bng-name").textContent = this._text("last_detection");
-    this.querySelector(".bng-scientific").textContent = this._text(
-      "last_detection_scientific",
-      ""
-    );
-    this.querySelector(".bng-dot").classList.toggle("bng-online", online);
-    this.querySelector(".bng-dot").classList.toggle("bng-offline", !online);
-
-    const confidence = this._text("last_detection_confidence", null);
-    this.querySelector(".bng-confidence").textContent = confidence
-      ? `${confidence}% confidence`
-      : "";
-    this.querySelector(".bng-time").textContent = this._time("last_detection_time");
-
-    this.querySelector(".bng-detections-today").textContent = this._text(
-      "detections_today",
-      "0"
-    );
-    this.querySelector(".bng-species-today").textContent = this._text(
-      "species_today",
-      "0"
-    );
-    this.querySelector(".bng-total-detections").textContent = this._text(
-      "total_detections",
-      "0"
-    );
+    this.innerHTML = `
+      <ha-card>
+        ${
+          cfg.show_image
+            ? `<div class="bng-picture${imgUrl ? "" : " bng-no-image"}"
+                    ${imgUrl ? `style="background-image:url(${imgUrl})"` : ""}
+                    data-action="open-image">
+                 ${imgUrl ? "" : '<ha-icon icon="mdi:image-off-outline"></ha-icon>'}
+               </div>`
+            : ""
+        }
+        <div class="bng-body">
+          <div class="bng-headline" data-action="open-detection">
+            <span class="bng-name">${this._escape(name)}</span>
+            ${
+              cfg.show_status
+                ? `<span class="bng-status-pill ${online ? "bng-online" : "bng-offline"}">
+                     <ha-icon icon="${online ? "mdi:wifi" : "mdi:wifi-off"}"></ha-icon>
+                     ${online ? "online" : "offline"}
+                   </span>`
+                : ""
+            }
+          </div>
+          ${cfg.show_scientific && scientific ? `<div class="bng-scientific">${this._escape(scientific)}</div>` : ""}
+          ${metaChips.length ? `<div class="bng-meta">${metaChips.join("")}</div>` : ""}
+          ${this._renderStats(cfg)}
+          ${this._renderTopSpecies(cfg)}
+        </div>
+      </ha-card>`;
+    this._ensureStyle();
   }
 
   _ensureStyle() {
@@ -200,6 +318,7 @@ class BirdnetGoCard extends HTMLElement {
     const style = document.createElement("style");
     style.textContent = `
       ha-card { overflow: hidden; }
+      ha-icon { --mdc-icon-size: 16px; }
       .bng-empty {
         padding: 16px;
         color: var(--secondary-text-color);
@@ -217,11 +336,14 @@ class BirdnetGoCard extends HTMLElement {
         display: flex;
         align-items: center;
         justify-content: center;
+        color: var(--secondary-text-color);
       }
+      .bng-picture.bng-no-image ha-icon { --mdc-icon-size: 32px; }
       .bng-body { padding: 12px 16px 16px; }
       .bng-headline {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 8px;
         cursor: pointer;
       }
@@ -231,14 +353,27 @@ class BirdnetGoCard extends HTMLElement {
         color: var(--primary-text-color);
         text-transform: capitalize;
       }
-      .bng-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
+      .bng-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
         flex-shrink: 0;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
       }
-      .bng-dot.bng-online { background: var(--state-active-color, #4caf50); }
-      .bng-dot.bng-offline { background: var(--state-unavailable-color, #9e9e9e); }
+      .bng-status-pill ha-icon { --mdc-icon-size: 13px; }
+      .bng-status-pill.bng-online {
+        color: var(--state-active-color, #4caf50);
+        background: rgba(76, 175, 80, 0.12);
+      }
+      .bng-status-pill.bng-offline {
+        color: var(--state-unavailable-color, #9e9e9e);
+        background: rgba(158, 158, 158, 0.12);
+      }
       .bng-scientific {
         font-style: italic;
         font-size: 13px;
@@ -247,18 +382,44 @@ class BirdnetGoCard extends HTMLElement {
       }
       .bng-meta {
         display: flex;
-        justify-content: space-between;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .bng-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
         font-size: 12px;
         color: var(--secondary-text-color);
-        margin-top: 8px;
+        background: var(--secondary-background-color, rgba(0, 0, 0, 0.05));
+        border-radius: 6px;
+        padding: 3px 8px;
       }
       .bng-stats {
         display: flex;
         margin-top: 14px;
         border-top: 1px solid var(--divider-color);
-        padding-top: 10px;
+        padding-top: 12px;
       }
-      .bng-stat { flex: 1; text-align: center; }
+      .bng-stat {
+        flex: 1;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        position: relative;
+      }
+      .bng-stat:not(:first-child)::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 4px;
+        bottom: 4px;
+        width: 1px;
+        background: var(--divider-color);
+      }
+      .bng-stat-icon { color: var(--secondary-text-color); }
       .bng-stat-value {
         font-size: 18px;
         font-weight: 500;
@@ -270,6 +431,67 @@ class BirdnetGoCard extends HTMLElement {
         letter-spacing: 0.04em;
         color: var(--secondary-text-color);
       }
+      .bng-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 14px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
+        cursor: pointer;
+      }
+      .bng-top-thumb {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background-size: cover;
+        background-position: center;
+        background-color: var(--divider-color, #333);
+      }
+      .bng-top-thumb-empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--secondary-text-color);
+      }
+      .bng-top-info { flex: 1; min-width: 0; }
+      .bng-top-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--secondary-text-color);
+      }
+      .bng-top-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--primary-text-color);
+        text-transform: capitalize;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .bng-top-scientific {
+        font-size: 11px;
+        font-style: italic;
+        color: var(--secondary-text-color);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .bng-top-count {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--primary-text-color);
+        flex-shrink: 0;
+      }
+      .bng-top-count span {
+        font-size: 11px;
+        font-weight: 400;
+        color: var(--secondary-text-color);
+        margin-left: 1px;
+      }
     `;
     this.appendChild(style);
   }
@@ -278,13 +500,17 @@ class BirdnetGoCard extends HTMLElement {
 customElements.define("birdnet-go-card", BirdnetGoCard);
 
 /**
- * Config editor for `birdnet-go-card`. Single field (`device_id`), so a
- * bare `ha-form` with a device selector scoped to this integration is all
- * that's needed — no per-field custom markup.
+ * Config editor for `birdnet-go-card`: device selector + preset picker,
+ * with the individual `show_*` toggles only appearing once "Custom" is
+ * selected. Switching *into* custom seeds the toggles from whichever named
+ * preset was active, so the user fine-tunes from a sane starting point
+ * instead of a blank slate; switching *out of* custom drops the per-field
+ * overrides again so the saved config stays a plain `{ preset, device_id }`
+ * for the common case.
  */
 class BirdnetGoCardEditor extends HTMLElement {
   setConfig(config) {
-    this._config = config || {};
+    this._config = { preset: "simple", ...(config || {}) };
     this._render();
   }
 
@@ -294,17 +520,84 @@ class BirdnetGoCardEditor extends HTMLElement {
   }
 
   _schema() {
-    return [
+    const schema = [
+      { name: "device_id", selector: { device: { filter: { integration: "birdnet_go" } } } },
       {
-        name: "device_id",
-        selector: { device: { filter: { integration: "birdnet_go" } } },
+        name: "preset",
+        selector: {
+          select: {
+            mode: "list",
+            options: [
+              { value: "basic", label: "Basic — photo & name only" },
+              { value: "simple", label: "Simple — + confidence, time, stats" },
+              { value: "advanced", label: "Advanced — + status & top species today" },
+              { value: "nerd", label: "Nerd — everything, incl. all-time species count" },
+              { value: "custom", label: "Custom — pick fields individually" },
+            ],
+          },
+        },
       },
     ];
+
+    if ((this._config.preset || "simple") === "custom") {
+      schema.push(
+        { name: "show_image", selector: { boolean: {} } },
+        { name: "show_scientific", selector: { boolean: {} } },
+        { name: "show_confidence", selector: { boolean: {} } },
+        { name: "show_time", selector: { boolean: {} } },
+        { name: "show_status", selector: { boolean: {} } },
+        { name: "show_stats", selector: { boolean: {} } },
+        { name: "show_total_species", selector: { boolean: {} } },
+        { name: "show_top_species", selector: { boolean: {} } }
+      );
+    }
+    return schema;
   }
 
   _computeLabel(schema) {
-    if (schema.name === "device_id") return "BirdNET-Go device (optional)";
-    return schema.name;
+    const labels = {
+      device_id: "BirdNET-Go device (optional)",
+      preset: "Layout preset",
+      show_image: "Last detection photo",
+      show_scientific: "Scientific name",
+      show_confidence: "Confidence badge",
+      show_time: "Time badge",
+      show_status: "Connectivity pill",
+      show_stats: "Today / species / total stats row",
+      show_total_species: "All-time known species count",
+      show_top_species: "Top species today section",
+    };
+    return labels[schema.name] || schema.name;
+  }
+
+  _handleValueChanged(ev) {
+    ev.stopPropagation();
+    const oldPreset = this._config.preset || "simple";
+    const newValue = { ...ev.detail.value };
+    const newPreset = newValue.preset || "simple";
+
+    if (newPreset === "custom" && oldPreset !== "custom") {
+      // Entering custom — seed the toggles from the preset being left, so
+      // there's something sensible to fine-tune rather than a blank form.
+      const seed = PRESETS[oldPreset] || PRESETS.simple;
+      for (const field of TOGGLE_FIELDS) {
+        if (typeof newValue[field] !== "boolean") newValue[field] = seed[field];
+      }
+    } else if (newPreset !== "custom") {
+      // Leaving custom (or never in it) — named presets carry no per-field
+      // overrides, keep the saved config minimal.
+      for (const field of TOGGLE_FIELDS) delete newValue[field];
+    }
+
+    this._config = newValue;
+    this._render();
+    this.dispatchEvent(
+      new CustomEvent("config-changed", {
+        detail: { config: this._config },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   _render() {
@@ -312,17 +605,7 @@ class BirdnetGoCardEditor extends HTMLElement {
 
     if (!this._form) {
       this._form = document.createElement("ha-form");
-      this._form.addEventListener("value-changed", (ev) => {
-        ev.stopPropagation();
-        this._config = ev.detail.value;
-        this.dispatchEvent(
-          new CustomEvent("config-changed", {
-            detail: { config: this._config },
-            bubbles: true,
-            composed: true,
-          })
-        );
-      });
+      this._form.addEventListener("value-changed", (ev) => this._handleValueChanged(ev));
       this.appendChild(this._form);
     }
 
