@@ -10,10 +10,10 @@ All notable changes to this project will be documented in this file.
   integration. Previously the card picker showed "Visual editor not
   supported" and forced YAML for the one optional `device_id` field.
 
-To verify: PVE VM 103 (`HA-inpost-dev`, 192.168.18.178) via HACS
-(custom repository → download v1.5.0 → restart) — card picker should open
-on the visual editor with a device dropdown instead of the YAML-only
-fallback.
+Verified live on PVE VM 103 (`HA-inpost-dev`, 192.168.18.178) via HACS
+(custom repository → download v1.5.0 → restart): editing the existing
+card now opens a "Config" tab with a "Select a device" dropdown instead
+of the YAML-only fallback, live preview updates alongside it.
 
 ## [1.4.1] — 2026-08-26
 

@@ -50,7 +50,7 @@ type: custom:birdnet-go-card
 # device_id: <id>   # optional — only needed with more than one BirdNET-Go device
 ```
 
-It finds its entities by scanning the entity registry for `platform: birdnet_go` and matching each one's `translation_key` — not by guessing entity_ids, so renaming entities or the device doesn't break it. (`unique_id` would have been the more obvious match target, but it isn't exposed on the frontend's entity registry snapshot at all.) No visual (GUI) editor; configure via the card picker's YAML/code editor.
+It finds its entities by scanning the entity registry for `platform: birdnet_go` and matching each one's `translation_key` — not by guessing entity_ids, so renaming entities or the device doesn't break it. (`unique_id` would have been the more obvious match target, but it isn't exposed on the frontend's entity registry snapshot at all.) Has a visual (GUI) editor — a device dropdown scoped to this integration — alongside the YAML/code editor in the card picker.
 
 <p align="center">
   <img src="docs/screenshots/birdnet-go-card.png" width="60%" alt="The bundled birdnet-go-card, rendered in a dashboard">
