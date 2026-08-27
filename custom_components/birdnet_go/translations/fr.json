@@ -1,0 +1,44 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "BirdNET-Go",
+        "description": "Connection directe au serveur BirdNET-Go (REST + SSE, pas de broker MQTT requis).",
+        "data": {
+          "host": "Hôte",
+          "verify_ssl": "Verifier le certificat SSL"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Connexion impossible à BirdNET-Go sur cet hôte.",
+      "ssl_error": "Echec de la vérification du certificat SSL.",
+      "unknown": "Erreur inconnue."
+    },
+    "abort": {
+      "already_configured": "Cet hôte BirdNET-Go est déjà configuré."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_detection": { "name": "Dernière détection" },
+      "last_detection_scientific": { "name": "Nom scientifique dernière détection" },
+      "last_detection_time": { "name": "Heure dernière détection" },
+      "last_detection_confidence": { "name": "Confiance dernière détection" },
+      "detections_today": { "name": "Détections ce jour" },
+      "species_today": { "name": "Espèces ce jour" },
+      "top_species": { "name": "Espèce la plus commune" },
+      "top_species_scientific": { "name": "Nom scientifique de l'espèce la plus commune" },
+      "top_species_count": { "name": "Nombre de détections pour l'espèce la plus commune" },
+      "total_species": { "name": "Nombre d'expèces au total" },
+      "total_detections": { "name": "Nombre de détection au total" }
+    },
+    "binary_sensor": {
+      "status": { "name": "Status" }
+    },
+    "image": {
+      "last_detection_image": { "name": "Image de la dernière détection" },
+      "top_species_thumbnail": { "name": "Vignette de l'espèce la plus commune" }
+    }
+  }
+}
