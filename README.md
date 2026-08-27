@@ -48,7 +48,7 @@ The integration ships its own Lovelace card — `custom_components/birdnet_go/fr
 ```yaml
 type: custom:birdnet-go-card
 preset: simple   # basic | simple | advanced | nerd | custom (default: simple)
-layout: stacked  # stacked | overlay | sylwetka | tabliczka | pasek (default: stacked)
+layout: stacked  # stacked | overlay | silhouette | plaque | bar (default: stacked)
 # device_id: <id>   # optional — only needed with more than one BirdNET-Go device
 ```
 
@@ -68,9 +68,13 @@ layout: stacked  # stacked | overlay | sylwetka | tabliczka | pasek (default: st
 |---|---|
 | `stacked` (default) | Name/scientific/badges below the photo |
 | `overlay` | Name/scientific as a gradient-scrim caption *on* the photo; confidence/time as corner badges over it. Falls back to `stacked` if there's no photo to overlay onto. |
-| `sylwetka` (Silhouette) | Photo bleeds off the right edge, masked to fade into the card background; text sits over the faded part. Fixed-height compact tile — no top-species section. |
-| `tabliczka` (Plaque) | Rounded-square thumbnail beside a left-aligned text column. Same fixed-height tile as Silhouette. |
-| `pasek` (Bar) | Circular thumbnail beside a right-aligned text column. Same fixed-height tile as Silhouette. |
+| `silhouette` | Photo bleeds off the right edge, masked to fade into the card background; text sits over the faded part. Fixed-height compact tile — no top-species section. |
+| `plaque` | Rounded-square thumbnail beside a left-aligned text column. Same fixed-height tile as Silhouette. |
+| `bar` | Circular thumbnail beside a right-aligned text column. Same fixed-height tile as Silhouette. |
+
+Configs written before 1.10.0 with the old Polish values (`sylwetka`, `tabliczka`, `pasek`) keep working — they are mapped to the English names on load.
+
+The card editor and all card text (stats labels, online/offline, top species) follow the HA user's language: English, Polish and French are built in, anything else falls back to English.
 
 The three tile layouts (Silhouette/Plaque/Bar) reuse the preset's existing toggles for content — no extra config fields — and bake in bleed/thumbnail-size/gap as fixed layout constants, tuned in a standalone POC against a real detection photo. Like `overlay`, each falls back to `stacked` whenever there's no photo (image hidden, or none loaded yet).
 

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.10.0] — 2026-08-27
+
+### Changed
+- `birdnet-go-card` tile layout config values renamed to English, matching
+  the rest of the schema: `sylwetka` → `silhouette`, `tabliczka` → `plaque`,
+  `pasek` → `bar`. Existing configs with the Polish values keep working
+  (mapped on load, the editor rewrites them on next save).
+
+### Added
+- Card UI is now localised by the HA user's language (`hass.locale.language`):
+  editor field labels, layout/preset option labels, stats labels
+  (today/species/total/known), online/offline pill and "Top species today"
+  header. Built-in: English, Polish, French; other languages fall back to
+  English.
+
 ## [1.9.0] — 2026-08-27
 
 ### Added

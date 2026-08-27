@@ -31,7 +31,7 @@
  * valid combination. Falls back to stacked whenever there's no photo to
  * overlay onto (image hidden, or none downloaded yet).
  *
- * Three more layouts — "sylwetka", "tabliczka", "pasek" — are compact,
+ * Three more layouts — "silhouette", "plaque", "bar" — are compact,
  * fixed-height tile designs, not a caption treatment of the normal body:
  * they replace header/stats/top-species entirely with a single small block
  * (see `_renderTile`). Tuned against a real detection photo in a standalone
@@ -96,7 +96,110 @@ const TOGGLE_FIELDS = Object.keys(PRESETS.simple);
 
 // Fixed-height tile layouts — see the class doc comment above for what
 // they are and why the POC's photo-tinting sliders aren't ported.
-const TILE_LAYOUTS = ["sylwetka", "tabliczka", "pasek"];
+const TILE_LAYOUTS = ["silhouette", "plaque", "bar"];
+// Pre-1.10 configs used Polish layout values; keep them working unchanged.
+const LAYOUT_ALIASES = { sylwetka: "silhouette", tabliczka: "plaque", pasek: "bar" };
+const normalizeLayout = (layout) => LAYOUT_ALIASES[layout] || layout;
+
+// UI strings, picked by the HA user's language (hass.locale.language),
+// falling back to English. Config values themselves are always English.
+const STRINGS = {
+  en: {
+    layout_stacked: "Stacked — text below the photo",
+    layout_overlay: "Overlay — caption on the photo",
+    layout_silhouette: "Silhouette — photo bleeds off the edge",
+    layout_plaque: "Plaque — rounded thumbnail beside text",
+    layout_bar: "Bar — circular thumbnail, right-aligned text",
+    preset_basic: "Basic — photo & name only",
+    preset_simple: "Simple — + confidence, time, stats",
+    preset_advanced: "Advanced — + status & top species today",
+    preset_nerd: "Nerd — everything, incl. all-time species count",
+    preset_custom: "Custom — pick fields individually",
+    field_device_id: "BirdNET-Go device (optional)",
+    field_layout: "Card layout",
+    field_preset: "Information preset",
+    field_show_image: "Last detection photo",
+    field_show_scientific: "Scientific name",
+    field_show_confidence: "Confidence badge",
+    field_show_time: "Time badge",
+    field_show_status: "Connectivity pill",
+    field_show_stats: "Today / species / total stats row",
+    field_show_total_species: "All-time known species count",
+    field_show_top_species: "Top species today section",
+    stat_today: "today",
+    stat_species: "species",
+    stat_total: "total",
+    stat_known: "known",
+    online: "online",
+    offline: "offline",
+    top_species_today: "Top species today",
+  },
+  pl: {
+    layout_stacked: "Stos — tekst pod zdjęciem",
+    layout_overlay: "Nakładka — podpis na zdjęciu",
+    layout_silhouette: "Sylwetka — zdjęcie wychodzi poza krawędź",
+    layout_plaque: "Tabliczka — zaokrąglona miniatura obok tekstu",
+    layout_bar: "Pasek — okrągła miniatura, tekst do prawej",
+    preset_basic: "Podstawowy — tylko zdjęcie i nazwa",
+    preset_simple: "Prosty — + pewność, czas, statystyki",
+    preset_advanced: "Zaawansowany — + status i gatunek dnia",
+    preset_nerd: "Nerd — wszystko, łącznie z liczbą znanych gatunków",
+    preset_custom: "Własny — wybierz pola ręcznie",
+    field_device_id: "Urządzenie BirdNET-Go (opcjonalne)",
+    field_layout: "Układ karty",
+    field_preset: "Zestaw informacji",
+    field_show_image: "Zdjęcie ostatniej detekcji",
+    field_show_scientific: "Nazwa naukowa",
+    field_show_confidence: "Znacznik pewności",
+    field_show_time: "Znacznik czasu",
+    field_show_status: "Wskaźnik połączenia",
+    field_show_stats: "Wiersz statystyk: dziś / gatunki / razem",
+    field_show_total_species: "Liczba wszystkich znanych gatunków",
+    field_show_top_species: "Sekcja gatunku dnia",
+    stat_today: "dziś",
+    stat_species: "gatunki",
+    stat_total: "razem",
+    stat_known: "znane",
+    online: "online",
+    offline: "offline",
+    top_species_today: "Gatunek dnia",
+  },
+  fr: {
+    layout_stacked: "Empilé — texte sous la photo",
+    layout_overlay: "Superposé — légende sur la photo",
+    layout_silhouette: "Silhouette — la photo déborde du bord",
+    layout_plaque: "Plaque — vignette arrondie à côté du texte",
+    layout_bar: "Barre — vignette ronde, texte aligné à droite",
+    preset_basic: "Basique — photo et nom uniquement",
+    preset_simple: "Simple — + confiance, heure, statistiques",
+    preset_advanced: "Avancé — + statut et espèce du jour",
+    preset_nerd: "Nerd — tout, y compris le total d'espèces connues",
+    preset_custom: "Personnalisé — choisir les champs un par un",
+    field_device_id: "Appareil BirdNET-Go (optionnel)",
+    field_layout: "Disposition de la carte",
+    field_preset: "Niveau d'information",
+    field_show_image: "Photo de la dernière détection",
+    field_show_scientific: "Nom scientifique",
+    field_show_confidence: "Badge de confiance",
+    field_show_time: "Badge d'heure",
+    field_show_status: "Indicateur de connexion",
+    field_show_stats: "Ligne de statistiques : jour / espèces / total",
+    field_show_total_species: "Nombre total d'espèces connues",
+    field_show_top_species: "Section espèce du jour",
+    stat_today: "aujourd'hui",
+    stat_species: "espèces",
+    stat_total: "total",
+    stat_known: "connues",
+    online: "en ligne",
+    offline: "hors ligne",
+    top_species_today: "Espèce du jour",
+  },
+};
+
+function translate(hass, key) {
+  const lang = (hass?.locale?.language || hass?.language || "en").split("-")[0];
+  return STRINGS[lang]?.[key] ?? STRINGS.en[key] ?? key;
+}
 const TILE_HEIGHT = 190; // px — the POC's tuned "wys" default
 
 class BirdnetGoCard extends HTMLElement {
@@ -156,9 +259,8 @@ class BirdnetGoCard extends HTMLElement {
   _effectiveConfig() {
     const config = this._config || {};
     const preset = config.preset || "simple";
-    const layout = ["overlay", ...TILE_LAYOUTS].includes(config.layout)
-      ? config.layout
-      : "stacked";
+    const requested = normalizeLayout(config.layout);
+    const layout = ["overlay", ...TILE_LAYOUTS].includes(requested) ? requested : "stacked";
     if (preset !== "custom") {
       return { ...(PRESETS[preset] || PRESETS.simple), layout };
     }
@@ -234,15 +336,19 @@ class BirdnetGoCard extends HTMLElement {
     return div.innerHTML;
   }
 
+  _t(key) {
+    return translate(this._hass, key);
+  }
+
   _renderStats(cfg) {
     const items = [];
     if (cfg.show_stats) {
-      items.push({ icon: "mdi:calendar-today", value: this._text("detections_today", "0"), label: "today" });
-      items.push({ icon: "mdi:bird", value: this._text("species_today", "0"), label: "species" });
-      items.push({ icon: "mdi:counter", value: this._text("total_detections", "0"), label: "total" });
+      items.push({ icon: "mdi:calendar-today", value: this._text("detections_today", "0"), label: this._t("stat_today") });
+      items.push({ icon: "mdi:bird", value: this._text("species_today", "0"), label: this._t("stat_species") });
+      items.push({ icon: "mdi:counter", value: this._text("total_detections", "0"), label: this._t("stat_total") });
     }
     if (cfg.show_total_species) {
-      items.push({ icon: "mdi:format-list-bulleted-square", value: this._text("total_species", "0"), label: "known" });
+      items.push({ icon: "mdi:format-list-bulleted-square", value: this._text("total_species", "0"), label: this._t("stat_known") });
     }
     if (!items.length) return "";
     return `
@@ -253,7 +359,7 @@ class BirdnetGoCard extends HTMLElement {
           <div class="bng-stat">
             <ha-icon icon="${s.icon}" class="bng-stat-icon"></ha-icon>
             <div class="bng-stat-value">${this._escape(s.value)}</div>
-            <div class="bng-stat-label">${s.label}</div>
+            <div class="bng-stat-label">${this._escape(s.label)}</div>
           </div>`
           )
           .join("")}
@@ -274,7 +380,7 @@ class BirdnetGoCard extends HTMLElement {
           ${thumbUrl ? "" : '<ha-icon icon="mdi:bird"></ha-icon>'}
         </div>
         <div class="bng-top-info">
-          <div class="bng-top-label">Top species today</div>
+          <div class="bng-top-label">${this._escape(this._t("top_species_today"))}</div>
           <div class="bng-top-name">${this._escape(name)}</div>
           ${scientific ? `<div class="bng-top-scientific">${this._escape(scientific)}</div>` : ""}
         </div>
@@ -293,9 +399,9 @@ class BirdnetGoCard extends HTMLElement {
     if (cfg.show_time) metaParts.push(d.time);
     const metaHtml = metaParts.length ? `<div class="bng-tile-meta">${metaParts.join(" · ")}</div>` : "";
     const counterHtml = cfg.show_stats
-      ? `<div class="bng-tile-counter">${this._escape(this._text("detections_today", "0"))} today · ${this._escape(
+      ? `<div class="bng-tile-counter">${this._escape(this._text("detections_today", "0"))} ${this._escape(this._t("stat_today"))} · ${this._escape(
           this._text("species_today", "0")
-        )} species</div>`
+        )} ${this._escape(this._t("stat_species"))}</div>`
       : "";
     const dotHtml = cfg.show_status
       ? `<span class="bng-tile-dot ${d.online ? "bng-tile-dot-on" : "bng-tile-dot-off"}"></span>`
@@ -306,13 +412,13 @@ class BirdnetGoCard extends HTMLElement {
         ? `<div class="bng-tile-scientific" style="font-size:${size}px">${this._escape(d.scientific)}</div>`
         : "";
 
-    if (layout === "sylwetka") {
+    if (layout === "silhouette") {
       // Photo bleeds off the right edge, masked to fade into the card
       // background — the text column sits where the fade has taken over.
       return `
-        <div class="bng-tile bng-tile-sylwetka" data-action="open-detection">
+        <div class="bng-tile bng-tile-silhouette" data-action="open-detection">
           <img class="bng-tile-photo bng-tile-photo-bleed" src="${d.imgUrl}" alt="">
-          <div class="bng-tile-sylwetka-text">
+          <div class="bng-tile-silhouette-text">
             <div class="bng-tile-label">${dotHtml}<span>Last heard</span></div>
             ${nameHtml(18)}${sciHtml(12)}${metaHtml}
             <div class="bng-tile-divider"></div>
@@ -320,12 +426,12 @@ class BirdnetGoCard extends HTMLElement {
           </div>
         </div>`;
     }
-    if (layout === "tabliczka") {
+    if (layout === "plaque") {
       // Rounded-square thumbnail beside a left-aligned text column.
       return `
-        <div class="bng-tile bng-tile-tabliczka" data-action="open-detection">
+        <div class="bng-tile bng-tile-plaque" data-action="open-detection">
           <img class="bng-tile-photo bng-tile-photo-plaque" src="${d.imgUrl}" alt="">
-          <div class="bng-tile-tabliczka-text">
+          <div class="bng-tile-plaque-text">
             <div class="bng-tile-label">${dotHtml}<span>BirdNET</span></div>
             ${nameHtml(17)}${sciHtml(12)}
             <div class="bng-tile-divider"></div>
@@ -333,11 +439,11 @@ class BirdnetGoCard extends HTMLElement {
           </div>
         </div>`;
     }
-    // pasek — circular thumbnail beside a right-aligned text column.
+    // bar — circular thumbnail beside a right-aligned text column.
     return `
-      <div class="bng-tile bng-tile-pasek" data-action="open-detection">
+      <div class="bng-tile bng-tile-bar" data-action="open-detection">
         <img class="bng-tile-photo bng-tile-photo-bar" src="${d.imgUrl}" alt="">
-        <div class="bng-tile-pasek-text">
+        <div class="bng-tile-bar-text">
           <div class="bng-tile-label bng-tile-label-right">${dotHtml}<span>Last heard</span></div>
           ${nameHtml(16)}${sciHtml(11)}${metaHtml}${counterHtml}
         </div>
@@ -387,7 +493,7 @@ class BirdnetGoCard extends HTMLElement {
     const statusPill = cfg.show_status
       ? `<span class="bng-status-pill ${online ? "bng-online" : "bng-offline"}">
            <ha-icon icon="${online ? "mdi:wifi" : "mdi:wifi-off"}"></ha-icon>
-           ${online ? "online" : "offline"}
+           ${this._escape(this._t(online ? "online" : "offline"))}
          </span>`
       : "";
     const confidenceChip =
@@ -711,10 +817,10 @@ class BirdnetGoCard extends HTMLElement {
         box-shadow: 0 0 6px rgba(76, 175, 80, 0.7);
       }
       .bng-tile-dot-off { background: var(--state-unavailable-color, #9e9e9e); }
-      /* sylwetka — photo bleeds off the right edge, masked to fade into
+      /* silhouette — photo bleeds off the right edge, masked to fade into
          the card background; the text column sits over the faded part. */
-      .bng-tile-sylwetka { position: relative; overflow: hidden; }
-      .bng-tile-sylwetka .bng-tile-photo-bleed {
+      .bng-tile-silhouette { position: relative; overflow: hidden; }
+      .bng-tile-silhouette .bng-tile-photo-bleed {
         position: absolute;
         right: -22px;
         top: 0;
@@ -724,7 +830,7 @@ class BirdnetGoCard extends HTMLElement {
         -webkit-mask-image: linear-gradient(270deg, #000 42%, transparent 100%);
         mask-image: linear-gradient(270deg, #000 42%, transparent 100%);
       }
-      .bng-tile-sylwetka-text {
+      .bng-tile-silhouette-text {
         position: relative;
         z-index: 1;
         height: 100%;
@@ -736,14 +842,14 @@ class BirdnetGoCard extends HTMLElement {
         justify-content: center;
         gap: 4px;
       }
-      /* tabliczka — rounded-square thumbnail beside left-aligned text. */
-      .bng-tile-tabliczka {
+      /* plaque — rounded-square thumbnail beside left-aligned text. */
+      .bng-tile-plaque {
         display: flex;
         align-items: center;
         gap: 14px;
         padding: 13px;
       }
-      .bng-tile-tabliczka .bng-tile-photo-plaque {
+      .bng-tile-plaque .bng-tile-photo-plaque {
         width: 92px;
         height: 92px;
         flex: none;
@@ -751,21 +857,21 @@ class BirdnetGoCard extends HTMLElement {
         border-radius: 10px;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
       }
-      .bng-tile-tabliczka-text {
+      .bng-tile-plaque-text {
         flex: 1;
         min-width: 0;
         display: flex;
         flex-direction: column;
         gap: 3px;
       }
-      /* pasek — circular thumbnail beside right-aligned text. */
-      .bng-tile-pasek {
+      /* bar — circular thumbnail beside right-aligned text. */
+      .bng-tile-bar {
         display: flex;
         align-items: center;
         gap: 13px;
         padding: 13px;
       }
-      .bng-tile-pasek .bng-tile-photo-bar {
+      .bng-tile-bar .bng-tile-photo-bar {
         width: 84px;
         height: 84px;
         flex: none;
@@ -773,7 +879,7 @@ class BirdnetGoCard extends HTMLElement {
         border-radius: 50%;
         box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
       }
-      .bng-tile-pasek-text {
+      .bng-tile-bar-text {
         flex: 1;
         min-width: 0;
         text-align: right;
@@ -800,6 +906,7 @@ customElements.define("birdnet-go-card", BirdnetGoCard);
 class BirdnetGoCardEditor extends HTMLElement {
   setConfig(config) {
     this._config = { preset: "simple", layout: "stacked", ...(config || {}) };
+    this._config.layout = normalizeLayout(this._config.layout);
     this._render();
   }
 
@@ -816,13 +923,10 @@ class BirdnetGoCardEditor extends HTMLElement {
         selector: {
           select: {
             mode: "list",
-            options: [
-              { value: "stacked", label: "Stacked — text below the photo" },
-              { value: "overlay", label: "Overlay — caption on the photo" },
-              { value: "sylwetka", label: "Silhouette — photo bleeds off the edge" },
-              { value: "tabliczka", label: "Plaque — rounded thumbnail beside text" },
-              { value: "pasek", label: "Bar — circular thumbnail, right-aligned text" },
-            ],
+            options: ["stacked", "overlay", ...TILE_LAYOUTS].map((value) => ({
+              value,
+              label: translate(this._hass, `layout_${value}`),
+            })),
           },
         },
       },
@@ -831,13 +935,10 @@ class BirdnetGoCardEditor extends HTMLElement {
         selector: {
           select: {
             mode: "list",
-            options: [
-              { value: "basic", label: "Basic — photo & name only" },
-              { value: "simple", label: "Simple — + confidence, time, stats" },
-              { value: "advanced", label: "Advanced — + status & top species today" },
-              { value: "nerd", label: "Nerd — everything, incl. all-time species count" },
-              { value: "custom", label: "Custom — pick fields individually" },
-            ],
+            options: ["basic", "simple", "advanced", "nerd", "custom"].map((value) => ({
+              value,
+              label: translate(this._hass, `preset_${value}`),
+            })),
           },
         },
       },
@@ -859,20 +960,7 @@ class BirdnetGoCardEditor extends HTMLElement {
   }
 
   _computeLabel(schema) {
-    const labels = {
-      device_id: "BirdNET-Go device (optional)",
-      layout: "Card layout",
-      preset: "Information preset",
-      show_image: "Last detection photo",
-      show_scientific: "Scientific name",
-      show_confidence: "Confidence badge",
-      show_time: "Time badge",
-      show_status: "Connectivity pill",
-      show_stats: "Today / species / total stats row",
-      show_total_species: "All-time known species count",
-      show_top_species: "Top species today section",
-    };
-    return labels[schema.name] || schema.name;
+    return translate(this._hass, `field_${schema.name}`);
   }
 
   _handleValueChanged(ev) {
@@ -917,7 +1005,7 @@ class BirdnetGoCardEditor extends HTMLElement {
     this._form.hass = this._hass;
     this._form.data = this._config;
     this._form.schema = this._schema();
-    this._form.computeLabel = this._computeLabel;
+    this._form.computeLabel = (schema) => this._computeLabel(schema);
   }
 }
 
