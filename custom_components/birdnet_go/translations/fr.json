@@ -3,16 +3,16 @@
     "step": {
       "user": {
         "title": "BirdNET-Go",
-        "description": "Connection directe au serveur BirdNET-Go (REST + SSE, pas de broker MQTT requis).",
+        "description": "Connexion directe au serveur BirdNET-Go (REST + SSE, pas de broker MQTT requis).",
         "data": {
           "host": "Hôte",
-          "verify_ssl": "Verifier le certificat SSL"
+          "verify_ssl": "Vérifier le certificat SSL"
         }
       }
     },
     "error": {
       "cannot_connect": "Connexion impossible à BirdNET-Go sur cet hôte.",
-      "ssl_error": "Echec de la vérification du certificat SSL.",
+      "ssl_error": "Échec de la vérification du certificat SSL.",
       "unknown": "Erreur inconnue."
     },
     "abort": {
@@ -30,11 +30,11 @@
       "top_species": { "name": "Espèce la plus commune" },
       "top_species_scientific": { "name": "Nom scientifique de l'espèce la plus commune" },
       "top_species_count": { "name": "Nombre de détections pour l'espèce la plus commune" },
-      "total_species": { "name": "Nombre d'expèces au total" },
-      "total_detections": { "name": "Nombre de détection au total" }
+      "total_species": { "name": "Nombre d'espèces au total" },
+      "total_detections": { "name": "Nombre de détections au total" }
     },
     "binary_sensor": {
-      "status": { "name": "Status" }
+      "status": { "name": "Statut" }
     },
     "image": {
       "last_detection_image": { "name": "Image de la dernière détection" },

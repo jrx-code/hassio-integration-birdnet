@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] — 2026-08-27
+
+### Added
+- French translations (`translations/fr.json`) — contributed by
+  [@Aimache](https://github.com/Aimache) in #2. Covers the config flow
+  (host, SSL verification, error/abort messages) and all entity names
+  (sensors, binary sensor, images). Key set verified identical to `en.json`.
+
+### Fixed
+- French: spelling/accents corrected after merge (`Connexion`, `Vérifier`,
+  `Échec`, `espèces`, `détections`, `Statut`).
+
 ## [1.8.0] — 2026-08-26
 
 ### Added
