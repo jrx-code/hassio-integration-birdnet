@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.0] — 2026-08-28
+
+### Added
+- Swedish translation of the integration (config flow, entity names), from
+  [@Svardsten53](https://github.com/Svardsten53) (#4). The card's own UI
+  strings still fall back to English for Swedish users.
+- `tests/test_translations.py`: every `translations/*.json` has to parse and
+  carry exactly the key set of `en.json`, with no empty strings. Both Swedish
+  submissions arrived with a syntax error that no existing check caught —
+  hassfest and the HACS action do not read these files, so an invalid one
+  would have shipped and broken translation loading for everyone.
+
+### Fixed
+- `sv.json` was missing its closing brace and could not be parsed; repaired on
+  merge.
+
 ## [1.10.0] — 2026-08-27
 
 ### Changed
