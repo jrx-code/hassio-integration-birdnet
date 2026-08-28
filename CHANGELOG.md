@@ -9,10 +9,12 @@ All notable changes to this project will be documented in this file.
   [@Svardsten53](https://github.com/Svardsten53) (#4). The card's own UI
   strings still fall back to English for Swedish users.
 - `tests/test_translations.py`: every `translations/*.json` has to parse and
-  carry exactly the key set of `en.json`, with no empty strings. Both Swedish
-  submissions arrived with a syntax error that no existing check caught —
-  hassfest and the HACS action do not read these files, so an invalid one
-  would have shipped and broken translation loading for everyone.
+  carry exactly the key set of `en.json`, with no empty strings. Hassfest does
+  read these files, but only far enough to reject invalid JSON (`[ERROR] [JSON]
+  Invalid JSON file translations/sv.json`, which is what turned the merge of #4
+  red). It passes a file that parses but has drifted: a renamed key and an
+  empty string both went through hassfest green and were caught only by this
+  test — measured on a throwaway branch, not assumed.
 
 ### Fixed
 - `sv.json` was missing its closing brace and could not be parsed; repaired on

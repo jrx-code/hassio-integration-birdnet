@@ -118,7 +118,7 @@ Two layers, both driven by the user's own HA language setting — nothing to con
 - **Integration** (config flow, entity names): HA picks `translations/<lang>.json`. Currently shipped: `en`, `pl`, `fr`, `sv`.
 - **Card** (`birdnet-go-card` editor labels, stats, online/offline, top species): built into the card JS, `STRINGS` table in `frontend/birdnet-go-card.js`. Currently: `en`, `pl`, `fr`. Any other language falls back to English.
 
-Contributions for more languages welcome — a PR adding `custom_components/birdnet_go/translations/<lang>.json` (`strings.json` is the English source of truth; keep the key set identical) and, ideally, a matching block in the card's `STRINGS` table. A file that is valid JSON and matches `en.json` key-for-key is all it takes, and CI checks exactly that: `tests/test_translations.py` parses every `translations/*.json` and compares its key set against `en.json`, so a truncated or double-pasted file fails the PR instead of breaking translation loading after the merge.
+Contributions for more languages welcome — a PR adding `custom_components/birdnet_go/translations/<lang>.json` (`strings.json` is the English source of truth; keep the key set identical) and, ideally, a matching block in the card's `STRINGS` table. A file that is valid JSON and matches `en.json` key-for-key is all it takes, and CI checks exactly that: hassfest rejects a file that is not valid JSON, and `tests/test_translations.py` additionally compares every `translations/*.json` key-for-key against `en.json` and rejects empty strings — the drift hassfest lets through.
 
 ## Status
 
