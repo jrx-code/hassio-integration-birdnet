@@ -13,7 +13,7 @@ INTEGRATION_VERSION: Final[str] = _MANIFEST.get("version", "0.0.0")
 
 # Frontend card, auto-registered as a Lovelace resource (see frontend/__init__.py)
 # — no manual "add resource" step for the user.
-FRONTEND_URL_BASE: Final[str] = "/birdnet_go_frontend"
+FRONTEND_URL_BASE: Final[str] = "/birdnet_go/frontend"
 FRONTEND_JS_MODULES: Final[list[dict[str, str]]] = [
     {
         "name": "BirdNET-Go Card",
