@@ -66,7 +66,7 @@ All notable changes to this project will be documented in this file.
 - Editor: three new options in the layout selector, alongside
   Stacked/Overlay.
 
-Verified live on PVE VM 103 (`HA-inpost-dev`, 192.168.18.178): pushed the
+Verified live on PVE VM 103 (`HA-inpost-dev`): pushed the
 updated card file directly (no HACS re-download needed for a JS-only
 change), then all three layouts rendered correctly on a real detection
 (Kopciuszek, 45%) in the card's own config-editor live preview — photo
@@ -86,7 +86,7 @@ console errors.
 - Editor: "Photo caption style" selector (Stacked/Overlay), shown
   regardless of preset, right above the preset picker.
 
-Verified live on PVE VM 103 (`HA-inpost-dev`, 192.168.18.178) via HACS
+Verified live on PVE VM 103 (`HA-inpost-dev`) via HACS
 (custom repository → download v1.7.0 → restart): Nerd preset + Overlay
 layout rendered correctly on a real detection (Kopciuszek, 42%) — name
 and scientific name as a gradient-scrim caption on the photo, confidence
@@ -125,7 +125,7 @@ top-species section unaffected below.
 - `getStubConfig()` now returns `{ preset: "simple" }` instead of `{}`, so
   a freshly added card explicitly shows what it defaults to.
 
-Verified live on PVE VM 103 (`HA-inpost-dev`, 192.168.18.178) via HACS
+Verified live on PVE VM 103 (`HA-inpost-dev`) via HACS
 (custom repository → download v1.6.0 → restart): editor shows the preset
 radio list plus live preview; Nerd preset rendered all four stats (incl.
 the 162 all-time known-species count) and the top-species-today
@@ -141,7 +141,7 @@ values when switched into.
   integration. Previously the card picker showed "Visual editor not
   supported" and forced YAML for the one optional `device_id` field.
 
-Verified live on PVE VM 103 (`HA-inpost-dev`, 192.168.18.178) via HACS
+Verified live on PVE VM 103 (`HA-inpost-dev`) via HACS
 (custom repository → download v1.5.0 → restart): editing the existing
 card now opens a "Config" tab with a "Select a device" dropdown instead
 of the YAML-only fallback, live preview updates alongside it.
@@ -172,7 +172,7 @@ of the YAML-only fallback, live preview updates alongside it.
 
 All three fixes verified: the entity/resource-mode fixes against a
 synthetic `hass` object injected client-side into PVE VM 103
-(`HomeAssistant-test`, 192.168.18.178) — a test instance, not production;
+(`HomeAssistant-test`) — a test instance, not production;
 the `entity_category` fix and the resource registration itself against
 production, since that's where the crash and the missing resource were
 first found (before the "test VM only" instruction landed).
