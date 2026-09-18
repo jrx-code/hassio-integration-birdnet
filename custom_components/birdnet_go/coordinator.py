@@ -42,6 +42,7 @@ from .const import (
     SSE_CONNECT_TIMEOUT,
     SSE_RECONNECT_MAX,
     SSE_RECONNECT_MIN,
+    build_base_url,
 )
 from .parsing import (
     daily_to_fields,
@@ -83,8 +84,8 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             name="BirdNET-Go",
             update_interval=timedelta(seconds=SCAN_INTERVAL_DAILY),
         )
-        self._host = host.rstrip("/")
-        self._base_url = f"https://{self._host}"
+        self._host = host.strip()
+        self._base_url = build_base_url(self._host)
         self._verify_ssl = verify_ssl
         self._session: aiohttp.ClientSession = async_get_clientsession(
             hass, verify_ssl=verify_ssl
@@ -122,7 +123,7 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data["available"] = True
         except (TimeoutError, aiohttp.ClientError) as err:
             raise UpdateFailed(
-                f"BirdNET-Go host {self._host} unreachable: {err}"
+                f"BirdNET-Go host {self._base_url} unreachable: {err}"
             ) from err
         return data
 
