@@ -45,3 +45,15 @@ API_PATH_MEDIA_IMAGE = "/api/v2/media/image/"
 # request timeouts
 REST_TIMEOUT = 15
 SSE_CONNECT_TIMEOUT = 15
+
+
+def build_base_url(host: str) -> str:
+    """Turn a user-entered host into an absolute base URL.
+
+    Accepts bare ``host:port`` / IP (defaults to ``http://``, typical for LAN
+    BirdNET-Go) or a full ``http(s)://…`` URL. Trailing slashes are stripped.
+    """
+    cleaned = host.strip().rstrip("/")
+    if cleaned.startswith(("http://", "https://")):
+        return cleaned
+    return f"http://{cleaned}"

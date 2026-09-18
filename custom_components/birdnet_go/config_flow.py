@@ -19,6 +19,7 @@ from .const import (
     DEFAULT_VERIFY_SSL,
     DOMAIN,
     REST_TIMEOUT,
+    build_base_url,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -33,10 +34,11 @@ DATA_SCHEMA = vol.Schema(
 
 async def _test_connection(hass, host: str, verify_ssl: bool) -> str | None:
     """Probe the BirdNET-Go API. Returns an error key or None on success."""
+    base_url = build_base_url(host)
     session = async_get_clientsession(hass, verify_ssl=verify_ssl)
     try:
         async with session.get(
-            f"https://{host}{API_PATH_RECENT}",
+            f"{base_url}{API_PATH_RECENT}",
             params={"limit": 1},
             timeout=ClientTimeout(total=REST_TIMEOUT),
         ) as resp:
@@ -68,13 +70,13 @@ class BirdNetGoConfigFlow(ConfigFlow, domain=DOMAIN):
             host = user_input[CONF_HOST].strip()
             verify_ssl = user_input[CONF_VERIFY_SSL]
 
-            await self.async_set_unique_id(host)
+            await self.async_set_unique_id(build_base_url(host))
             self._abort_if_unique_id_configured()
 
             error = await _test_connection(self.hass, host, verify_ssl)
             if error is None:
                 return self.async_create_entry(
-                    title=f"BirdNET-Go ({host})",
+                    title=f"BirdNET-Go ({build_base_url(host)})",
                     data={CONF_HOST: host, CONF_VERIFY_SSL: verify_ssl},
                 )
             errors["base"] = error
