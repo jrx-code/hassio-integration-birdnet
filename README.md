@@ -27,6 +27,8 @@ BirdNET-Go has built-in MQTT auto-discovery (since nightly-20260111), but that's
 
 All entities are enabled by default — nothing hidden behind "show disabled entities".
 
+Optional API auth (design proposal, not implemented yet): **[API auth proposal](docs/api-auth-proposal.md)**.
+
 ## Entities
 
 | Entity | Source |
