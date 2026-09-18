@@ -3,19 +3,19 @@
     "step": {
       "user": {
         "title": "BirdNET-Go",
-        "description": "Connect directly to the BirdNET-Go host (REST + SSE, no MQTT broker required). Enter host:port (defaults to http://) or a full http(s):// URL.",
+        "description": "Connect directly to the BirdNET-Go host (REST + SSE, no MQTT broker required). Enter host:port (defaults to HTTP) or a full URL with scheme.",
         "data": {
           "host": "Host or URL",
           "verify_ssl": "Verify SSL certificate"
         },
         "data_description": {
-          "host": "Examples: 192.168.1.50:8080, birdnet.local:8080, https://birdnet.example.com",
-          "verify_ssl": "Turn off for self-signed HTTPS (e.g. reverse proxy). Ignored for plain HTTP."
+          "host": "Examples: 192.168.1.50:8080, birdnet.local:8080, or https host with scheme",
+          "verify_ssl": "Turn off for self-signed certificates (e.g. reverse proxy). Ignored for plain HTTP."
         }
       }
     },
     "error": {
-      "cannot_connect": "Cannot connect to BirdNET-Go at this host. Check scheme (http/https), port, and that HA can reach the host.",
+      "cannot_connect": "Cannot connect to BirdNET-Go at this host. Check scheme, port, and that HA can reach the host.",
       "ssl_error": "SSL certificate verification failed. Disable Verify SSL or fix the certificate.",
       "unknown": "Unexpected error."
     },

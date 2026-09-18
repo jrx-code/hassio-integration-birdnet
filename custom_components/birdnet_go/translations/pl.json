@@ -3,16 +3,20 @@
     "step": {
       "user": {
         "title": "BirdNET-Go",
-        "description": "Połączenie bezpośrednio z hostem BirdNET-Go (REST + SSE, bez brokera MQTT).",
+        "description": "Połączenie bezpośrednio z hostem BirdNET-Go (REST + SSE, bez brokera MQTT). Podaj host:port (domyślnie HTTP) albo pełny URL ze schematem.",
         "data": {
-          "host": "Host",
+          "host": "Host lub URL",
           "verify_ssl": "Weryfikuj certyfikat SSL"
+        },
+        "data_description": {
+          "host": "Przykłady: 192.168.1.50:8080, birdnet.local:8080 albo host HTTPS ze schematem",
+          "verify_ssl": "Wyłącz przy self-signed (np. reverse proxy). Ignorowane przy zwykłym HTTP."
         }
       }
     },
     "error": {
-      "cannot_connect": "Nie można połączyć się z BirdNET-Go pod tym hostem.",
-      "ssl_error": "Weryfikacja certyfikatu SSL nie powiodła się.",
+      "cannot_connect": "Nie można połączyć się z BirdNET-Go pod tym hostem. Sprawdź schemat, port i czy HA widzi hosta.",
+      "ssl_error": "Weryfikacja certyfikatu SSL nie powiodła się. Wyłącz weryfikację SSL albo popraw certyfikat.",
       "unknown": "Nieoczekiwany błąd."
     },
     "abort": {

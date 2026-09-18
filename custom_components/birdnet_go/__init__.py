@@ -11,15 +11,19 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, Platform
 from homeassistant.core import CoreState, HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 
-from .const import CONF_HOST, CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL
+from .const import CONF_HOST, CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL, DOMAIN
 from .coordinator import BirdNetGoCoordinator
 from .frontend import JSModuleRegistration
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.IMAGE, Platform.SENSOR]
+
+# Integration is config-entry only; async_setup only registers the Lovelace card.
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 type BirdNetGoConfigEntry = ConfigEntry[BirdNetGoCoordinator]
 
