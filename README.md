@@ -29,6 +29,7 @@ All entities are enabled by default — nothing hidden behind "show disabled ent
 
 Running BirdNET-Go behind nginx/Caddy/Traefik? See **[Reverse proxy + SSE](docs/reverse-proxy-sse.md)** (buffering, timeouts, HTTPS host field).
 HAOS / LAN / VPN / add-on reachability: **[HAOS & network topologies](docs/haos-network.md)**.
+Optional API auth (design proposal, not implemented yet): **[API auth proposal](docs/api-auth-proposal.md)**.
 
 ## Entities
 
