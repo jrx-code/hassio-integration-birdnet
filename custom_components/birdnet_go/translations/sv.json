@@ -3,19 +3,19 @@
     "step": {
       "user": {
         "title": "BirdNET-Go",
-        "description": "Anslut direkt till BirdNET-Go-värden (REST + SSE, ingen MQTT-broker). Ange host:port (standard http://) eller en fullständig http(s)://-URL.",
+        "description": "Anslut direkt till BirdNET-Go-värden (REST + SSE, ingen MQTT-broker). Ange host:port (standard HTTP) eller en fullständig URL med schema.",
         "data": {
           "host": "Värd eller URL",
           "verify_ssl": "Verifiera SSL-certifikat"
         },
         "data_description": {
-          "host": "Exempel: 192.168.1.50:8080, birdnet.local:8080, https://birdnet.example.com",
-          "verify_ssl": "Stäng av för självsignerat HTTPS (t.ex. reverse proxy). Ignoreras för vanlig HTTP."
+          "host": "Exempel: 192.168.1.50:8080, birdnet.local:8080 eller HTTPS-värd med schema",
+          "verify_ssl": "Stäng av för självsignerade certifikat (t.ex. reverse proxy). Ignoreras för vanlig HTTP."
         }
       }
     },
     "error": {
-      "cannot_connect": "Kan inte ansluta till BirdNET-Go på den här värden. Kontrollera schema (http/https), port och att HA når värden.",
+      "cannot_connect": "Kan inte ansluta till BirdNET-Go på den här värden. Kontrollera schema, port och att HA når värden.",
       "ssl_error": "Verifiering av SSL-certifikat misslyckades. Inaktivera SSL-verifiering eller åtgärda certifikatet.",
       "unknown": "Oväntat fel."
     },
