@@ -28,6 +28,7 @@ BirdNET-Go has built-in MQTT auto-discovery (since nightly-20260111), but that's
 All entities are enabled by default — nothing hidden behind "show disabled entities".
 
 Running BirdNET-Go behind nginx/Caddy/Traefik? See **[Reverse proxy + SSE](docs/reverse-proxy-sse.md)** (buffering, timeouts, HTTPS host field).
+HAOS / LAN / VPN / add-on reachability: **[HAOS & network topologies](docs/haos-network.md)**.
 
 ## Entities
 
@@ -101,7 +102,7 @@ It finds its entities by scanning the entity registry for `platform: birdnet_go`
 ### Manual
 Copy `custom_components/birdnet_go/` into your HA `config/custom_components/`, restart.
 
-Then: **Settings → Devices & Services → Add Integration → "BirdNET-Go"** (pictured above), enter your BirdNET-Go host (e.g. `192.168.1.50:8080` or a domain if you reverse-proxy it with HTTPS). Behind a reverse proxy, see [Reverse proxy + SSE](docs/reverse-proxy-sse.md).
+Then: **Settings → Devices & Services → Add Integration → "BirdNET-Go"** (pictured above), enter your BirdNET-Go host (e.g. `192.168.1.50:8080` or a domain if you reverse-proxy it with HTTPS). Behind a reverse proxy, see [Reverse proxy + SSE](docs/reverse-proxy-sse.md); for HAOS / LAN / VPN layouts, see [HAOS & network topologies](docs/haos-network.md).
 
 <p align="center">
   <img src="docs/screenshots/add-integration-picker.png" width="60%" alt="Add integration search — brand icon in the picker">
