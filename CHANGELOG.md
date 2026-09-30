@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.11.1] - 2026-09-30
+
+### Fixed
+- The host field honours an explicit `http://` or `https://` scheme and defaults
+  to `http://` for a bare `host:port` (#6). Before, a bare LAN address was
+  always reached over HTTPS and a full URL became `https://http://...`, so
+  "Unable to connect" (#5) was the integration, not the network.
+- The device page link (`configuration_url`) went through the same broken
+  `https://` prefix; it now uses the same URL as the connection.
+- Translations resynced for hassfest after #6 (#7).
+
+### Docs
+- [Reverse proxy + SSE](docs/reverse-proxy-sse.md) runbook for nginx, Caddy and
+  Traefik (#8).
+- [HAOS & network topologies](docs/haos-network.md) (#9).
+- [Optional API auth](docs/api-auth-proposal.md) design proposal, not
+  implemented (#10).
+
 ## [1.11.0] — 2026-08-28
 
 ### Added

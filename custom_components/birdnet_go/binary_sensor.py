@@ -14,7 +14,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_HOST, DOMAIN
+from .const import CONF_HOST, DOMAIN, build_base_url
 from .coordinator import BirdNetGoCoordinator
 
 STATUS_DESCRIPTION = BinarySensorEntityDescription(
@@ -52,7 +52,7 @@ class BirdNetGoStatusSensor(
             name="BirdNET-Go",
             manufacturer="tphakala",
             model="Audio Analyzer",
-            configuration_url=f"https://{entry.data[CONF_HOST]}",
+            configuration_url=build_base_url(entry.data[CONF_HOST]),
         )
 
     @property

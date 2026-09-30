@@ -25,7 +25,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_HOST, CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL, DOMAIN
+from .const import CONF_HOST, CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL, DOMAIN, build_base_url
 from .coordinator import BirdNetGoCoordinator
 
 IMAGE_DESCRIPTIONS: tuple[ImageEntityDescription, ...] = (
@@ -80,7 +80,7 @@ class BirdNetGoImage(CoordinatorEntity[BirdNetGoCoordinator], ImageEntity):
             name="BirdNET-Go",
             manufacturer="tphakala",
             model="Audio Analyzer",
-            configuration_url=f"https://{entry.data[CONF_HOST]}",
+            configuration_url=build_base_url(entry.data[CONF_HOST]),
         )
         self._last_url: str | None = self._current_url()
         self._last_updated: datetime | None = (
