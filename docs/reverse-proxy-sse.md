@@ -22,7 +22,7 @@ REST endpoints (`/api/v2/analytics/...`, `/api/v2/detections/recent`) are short-
 - **Host field** accepts `192.168.1.50:8080` (defaults to `http://`) or a full URL such as `https://birdnet.example.com`.
 - **Verify SSL** should match your certificate story (public CA or trusted private CA → on; self-signed you accept knowingly → off).
 - **Images** are fetched by Home Assistant and exposed via HA’s `/api/image_proxy/...`. The browser does **not** need a direct path to BirdNET-Go for thumbnails in the UI.
-- The SSE endpoint on BirdNET-Go is currently **unauthenticated** and rate-limited (about 10 connections per minute per IP). Prefer keeping BirdNET-Go on LAN or behind auth at the proxy edge; do not expose the raw API to the public internet without additional controls.
+- The SSE endpoint on BirdNET-Go does **not require authentication** (unauthenticated clients get a reduced payload) and is rate-limited to 10 connections per minute per IP. Prefer keeping BirdNET-Go on LAN or behind auth at the proxy edge; do not expose the raw API to the public internet without additional controls.
 
 ## Required proxy behaviour
 
@@ -113,11 +113,9 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.1.50:8080"
-        responseForwarding:
-          flushInterval: "0s"
 ```
 
-Also raise entrypoint / transport idle timeouts if Traefik or a front CDN closes quiet connections early.
+No `flushInterval` is needed: Traefik recognises `text/event-stream` as a streaming response and flushes every write immediately. Also raise entrypoint / transport idle timeouts if Traefik or a front CDN closes quiet connections early.
 
 ## Configuring the integration
 
@@ -142,7 +140,13 @@ Use the same hostname HA will keep using long-term. Changing host later means re
 
    You should see an open connection and eventually `data: …` lines when BirdNET-Go emits a detection (or a heartbeat / connection message). If `curl` hangs with no events and then dies at ~60s, fix proxy timeouts/buffering.
 
-2. Check HA logs for `BirdNET-Go SSE stream error, reconnecting` — repeated reconnects with increasing delay point at the proxy or upstream closing the stream.
+2. Check HA logs for `BirdNET-Go SSE stream error, reconnecting` — repeated reconnects with increasing delay point at the proxy or upstream closing the stream. The message is logged at debug level, so enable it first:
+
+   ```yaml
+   logger:
+     logs:
+       custom_components.birdnet_go: debug
+   ```
 
 3. Confirm you are not hitting BirdNET-Go’s connection rate limit (roughly 10 new connections per minute per IP) by reconnecting in a tight loop.
 
