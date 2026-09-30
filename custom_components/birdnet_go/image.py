@@ -25,7 +25,13 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import CONF_HOST, CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL, DOMAIN, build_base_url
+from .const import (
+    CONF_HOST,
+    CONF_VERIFY_SSL,
+    DEFAULT_VERIFY_SSL,
+    DOMAIN,
+    build_base_url,
+)
 from .coordinator import BirdNetGoCoordinator
 
 IMAGE_DESCRIPTIONS: tuple[ImageEntityDescription, ...] = (
