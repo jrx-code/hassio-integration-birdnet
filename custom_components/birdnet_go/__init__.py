@@ -67,3 +67,33 @@ async def async_unload_entry(hass: HomeAssistant, entry: BirdNetGoConfigEntry) -
     """Unload a config entry."""
     await entry.runtime_data.stop_sse()
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate an old config entry.
+
+    v1 -> v2: before the host field accepted an explicit scheme, the
+    coordinator always reached BirdNET-Go over HTTPS. Since then a bare
+    ``host[:port]`` defaults to ``http://``, so a schemeless host stored by an
+    older version would suddenly be probed on port 80 and fail. Pin such
+    entries back to ``https://`` to preserve their original behaviour; entries
+    that already carry a scheme are left untouched.
+    """
+    if entry.version > 2:
+        # Downgrade from a future schema — nothing sensible we can do.
+        return False
+
+    if entry.version == 1:
+        host = entry.data.get(CONF_HOST, "")
+        new_data = dict(entry.data)
+        if host and not host.startswith(("http://", "https://")):
+            new_data[CONF_HOST] = f"https://{host}"
+            _LOGGER.info(
+                "Migrating BirdNET-Go entry host %r to %r (schemeless hosts now "
+                "default to http://; pinning pre-v2 entries to https://)",
+                host,
+                new_data[CONF_HOST],
+            )
+        hass.config_entries.async_update_entry(entry, data=new_data, version=2)
+
+    return True

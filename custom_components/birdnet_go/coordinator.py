@@ -42,6 +42,7 @@ from .const import (
     SSE_CONNECT_TIMEOUT,
     SSE_RECONNECT_MAX,
     SSE_RECONNECT_MIN,
+    SUMMARY_TIMEOUT,
     build_base_url,
 )
 from .parsing import (
@@ -101,37 +102,65 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _async_update_data(self) -> dict[str, Any]:
         data = dict(self.data)
+
+        # Reachability probe. Only the fast daily endpoint gates availability —
+        # if it is unreachable the host is genuinely down and every entity
+        # should go unavailable. The heavier/optional fetches below must never
+        # do that (see their own handlers).
         try:
             data.update(
                 daily_to_fields(await self._get_json(API_PATH_DAILY), self._base_url)
             )
-
-            now = dt_util.utcnow()
-            if (
-                self._last_summary_fetch is None
-                or (now - self._last_summary_fetch).total_seconds()
-                >= SCAN_INTERVAL_SUMMARY
-            ):
-                data.update(summary_to_fields(await self._get_json(API_PATH_SUMMARY)))
-                self._last_summary_fetch = now
-
-            if data.get("last_detection") is None:
-                recent = await self._get_json(API_PATH_RECENT, params={"limit": 1})
-                if recent:
-                    data.update(detection_to_fields(recent[0], self._base_url))
-
-            data["available"] = True
         except (TimeoutError, aiohttp.ClientError) as err:
             raise UpdateFailed(
                 f"BirdNET-Go host {self._base_url} unreachable: {err}"
             ) from err
+
+        # All-time summary is a heavy analytics query (full table scan on large
+        # databases) that can take tens of seconds, especially behind a reverse
+        # proxy. It is refreshed at most hourly and must never take the fast,
+        # always-current daily/real-time data offline: a slow or failing summary
+        # is logged and skipped, keeping the previous values until it recovers.
+        now = dt_util.utcnow()
+        if (
+            self._last_summary_fetch is None
+            or (now - self._last_summary_fetch).total_seconds() >= SCAN_INTERVAL_SUMMARY
+        ):
+            try:
+                data.update(
+                    summary_to_fields(
+                        await self._get_json(API_PATH_SUMMARY, timeout=SUMMARY_TIMEOUT)
+                    )
+                )
+                self._last_summary_fetch = now
+            except (TimeoutError, aiohttp.ClientError) as err:
+                _LOGGER.debug(
+                    "BirdNET-Go summary fetch failed, keeping last values: %s", err
+                )
+
+        # Fallback for the last-detection fields until the first SSE push lands.
+        # Non-fatal for the same reason: it is only a convenience backfill.
+        if data.get("last_detection") is None:
+            try:
+                recent = await self._get_json(API_PATH_RECENT, params={"limit": 1})
+                if recent:
+                    data.update(detection_to_fields(recent[0], self._base_url))
+            except (TimeoutError, aiohttp.ClientError) as err:
+                _LOGGER.debug("BirdNET-Go recent fetch failed: %s", err)
+
+        data["available"] = True
         return data
 
-    async def _get_json(self, path: str, params: dict[str, Any] | None = None) -> Any:
+    async def _get_json(
+        self,
+        path: str,
+        params: dict[str, Any] | None = None,
+        timeout: float = REST_TIMEOUT,
+    ) -> Any:
         async with self._session.get(
             f"{self._base_url}{path}",
             params=params,
-            timeout=ClientTimeout(total=REST_TIMEOUT),
+            timeout=ClientTimeout(total=timeout),
         ) as resp:
             resp.raise_for_status()
             return await resp.json()

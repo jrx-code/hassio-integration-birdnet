@@ -58,7 +58,7 @@ async def _test_connection(hass, host: str, verify_ssl: bool) -> str | None:
 class BirdNetGoConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for BirdNET-Go."""
 
-    VERSION = 1
+    VERSION = 2
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None

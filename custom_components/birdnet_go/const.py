@@ -44,6 +44,10 @@ API_PATH_MEDIA_IMAGE = "/api/v2/media/image/"
 
 # request timeouts
 REST_TIMEOUT = 15
+# All-time summary is a full-table analytics query that stays slow on large
+# databases and behind a reverse proxy; give it far more headroom than the
+# fast daily/recent calls so it can complete instead of timing out.
+SUMMARY_TIMEOUT = 60
 SSE_CONNECT_TIMEOUT = 15
 
 

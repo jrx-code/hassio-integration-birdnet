@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.0] - 2026-10-12
+
+### Fixed
+- A slow or failing all-time summary no longer takes the whole integration
+  offline. Previously the daily stats, the summary and the recent-detection
+  backfill shared one try/except, so a single slow call made the coordinator
+  raise `UpdateFailed` and **every** entity went `unavailable` — even though
+  the host, the real-time SSE stream and today's stats were all fine. The
+  summary query is a full-table scan that grows to tens of seconds on a large
+  database (seen at ~12 s locally, >30 s behind a reverse proxy), so it tripped
+  the 15 s request timeout and emptied the panel.
+
+- Config entries created before the host field learned about URL schemes
+  (stored as a bare `host[:port]`) no longer break on upgrade. Since 1.11.1 a
+  schemeless host defaults to `http://`, so such an entry was suddenly probed
+  on port 80 and every entity went `unavailable`. A v1 -> v2 migration pins
+  schemeless hosts back to `https://`, the scheme those entries were always
+  reached on; entries that already carry a scheme are left untouched.
+
+### Changed
+- Only the fast `daily` endpoint now gates availability. The hourly all-time
+  `summary` and the `recent` backfill each have their own handler: on timeout
+  or error they are logged at debug and skipped, keeping the last good values
+  instead of blanking the device.
+- The `summary` request gets its own longer timeout (`SUMMARY_TIMEOUT`, 60 s)
+  so the heavy analytics query can actually complete.
+- Config entry schema bumped to version 2 (migration above).
+
 ## [1.11.1] - 2026-09-30
 
 ### Fixed
