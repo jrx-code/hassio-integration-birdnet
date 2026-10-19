@@ -32,8 +32,14 @@ DATA_SCHEMA = vol.Schema(
 )
 
 
-async def _test_connection(hass, host: str, verify_ssl: bool) -> str | None:
-    """Probe the BirdNET-Go API. Returns an error key or None on success."""
+async def _test_connection(hass, host: str, verify_ssl: bool) -> tuple[str | None, str]:
+    """Probe the BirdNET-Go API.
+
+    Returns ``(error_key, redirect_location)``; ``error_key`` is None on success.
+    Redirects are not followed: BirdNET-Go with its HTTPS redirect on answers
+    plain HTTP with a 308 to ``https://<host>/`` and drops a custom port, so
+    following it lands on the wrong port and only says "cannot connect".
+    """
     base_url = build_base_url(host)
     session = async_get_clientsession(hass, verify_ssl=verify_ssl)
     try:
@@ -41,18 +47,21 @@ async def _test_connection(hass, host: str, verify_ssl: bool) -> str | None:
             f"{base_url}{API_PATH_RECENT}",
             params={"limit": 1},
             timeout=ClientTimeout(total=REST_TIMEOUT),
+            allow_redirects=False,
         ) as resp:
+            if 300 <= resp.status < 400:
+                return "redirected", resp.headers.get("Location", "")
             if resp.status != 200:
-                return "cannot_connect"
+                return "cannot_connect", ""
             await resp.json()
     except aiohttp.ClientConnectorCertificateError:
-        return "ssl_error"
+        return "ssl_error", ""
     except (aiohttp.ClientError, TimeoutError):
-        return "cannot_connect"
+        return "cannot_connect", ""
     except Exception:
         _LOGGER.exception("Unexpected error probing BirdNET-Go")
-        return "unknown"
-    return None
+        return "unknown", ""
+    return None, ""
 
 
 class BirdNetGoConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -65,6 +74,7 @@ class BirdNetGoConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle the (only) step: host + verify_ssl, probed before creating the entry."""
         errors: dict[str, str] = {}
+        placeholders = {"location": ""}
 
         if user_input is not None:
             host = user_input[CONF_HOST].strip()
@@ -73,7 +83,9 @@ class BirdNetGoConfigFlow(ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(build_base_url(host))
             self._abort_if_unique_id_configured()
 
-            error = await _test_connection(self.hass, host, verify_ssl)
+            error, placeholders["location"] = await _test_connection(
+                self.hass, host, verify_ssl
+            )
             if error is None:
                 return self.async_create_entry(
                     title=f"BirdNET-Go ({build_base_url(host)})",
@@ -82,5 +94,8 @@ class BirdNetGoConfigFlow(ConfigFlow, domain=DOMAIN):
             errors["base"] = error
 
         return self.async_show_form(
-            step_id="user", data_schema=DATA_SCHEMA, errors=errors
+            step_id="user",
+            data_schema=DATA_SCHEMA,
+            errors=errors,
+            description_placeholders=placeholders,
         )

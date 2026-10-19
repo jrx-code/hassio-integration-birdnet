@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.1] - 2026-10-19
+
+### Fixed
+- Setup no longer reports a bare "cannot connect" when BirdNET-Go redirects
+  plain HTTP to HTTPS. With the HTTPS redirect on, BirdNET-Go answers
+  `http://host:8090` with a 308 to `https://host/`, dropping the custom port,
+  so the probe ended up on the wrong port. The probe now stops at the redirect
+  and says where BirdNET-Go sent it, so you can enter that HTTPS URL with the
+  right port or turn the redirect off (#11).
+
 ## [1.12.0] - 2026-10-12
 
 ### Fixed

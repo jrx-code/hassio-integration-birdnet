@@ -16,6 +16,7 @@
     },
     "error": {
       "cannot_connect": "Cannot connect to BirdNET-Go at this host. Check scheme, port, and that HA can reach the host.",
+      "redirected": "BirdNET-Go redirected the request to {location}. It forces HTTPS and the redirect drops a custom port: enter the HTTPS URL with the right port, or turn off the HTTPS redirect in BirdNET-Go.",
       "ssl_error": "SSL certificate verification failed. Disable Verify SSL or fix the certificate.",
       "unknown": "Unexpected error."
     },

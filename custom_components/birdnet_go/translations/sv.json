@@ -16,6 +16,7 @@
     },
     "error": {
       "cannot_connect": "Kan inte ansluta till BirdNET-Go på den här värden. Kontrollera schema, port och att HA når värden.",
+      "redirected": "BirdNET-Go omdirigerade begäran till {location}. Den tvingar HTTPS och omdirigeringen tappar en anpassad port: ange HTTPS-adressen med rätt port, eller stäng av HTTPS-omdirigeringen i BirdNET-Go.",
       "ssl_error": "Verifiering av SSL-certifikat misslyckades. Inaktivera SSL-verifiering eller åtgärda certifikatet.",
       "unknown": "Oväntat fel."
     },

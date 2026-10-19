@@ -16,6 +16,7 @@
     },
     "error": {
       "cannot_connect": "Nie można połączyć się z BirdNET-Go pod tym hostem. Sprawdź schemat, port i czy HA widzi hosta.",
+      "redirected": "BirdNET-Go przekierował zapytanie na {location}. Wymusza HTTPS, a przekierowanie gubi niestandardowy port: wpisz adres HTTPS z właściwym portem albo wyłącz przekierowanie na HTTPS w BirdNET-Go.",
       "ssl_error": "Weryfikacja certyfikatu SSL nie powiodła się. Wyłącz weryfikację SSL albo popraw certyfikat.",
       "unknown": "Nieoczekiwany błąd."
     },
