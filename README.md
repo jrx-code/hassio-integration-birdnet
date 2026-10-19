@@ -1,7 +1,7 @@
 # BirdNET-Go — Home Assistant Integration
 
 [![Validate](https://github.com/jrx-code/hassio-integration-birdnet/actions/workflows/validate.yml/badge.svg)](https://github.com/jrx-code/hassio-integration-birdnet/actions/workflows/validate.yml)
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://github.com/hacs/integration)
 [![GitHub release](https://img.shields.io/github/v/release/jrx-code/hassio-integration-birdnet)](https://github.com/jrx-code/hassio-integration-birdnet/releases)
 
 A custom Home Assistant integration for [BirdNET-Go](https://github.com/tphakala/birdnet-go). Connects **directly to your BirdNET-Go host** over REST + SSE — no MQTT broker required.
@@ -96,9 +96,11 @@ It finds its entities by scanning the entity registry for `platform: birdnet_go`
 
 ## Installation
 
-### HACS (custom repository)
-1. HACS → ⋮ → Custom repositories → add this repo URL, category **Integration**
-2. Install "BirdNET-Go", restart Home Assistant
+### HACS
+[![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jrx-code&repository=hassio-integration-birdnet&category=integration)
+
+1. HACS → search for **BirdNET-Go** (it is in the HACS default store, no custom repository needed)
+2. Download it, restart Home Assistant
 
 ### Manual
 Copy `custom_components/birdnet_go/` into your HA `config/custom_components/`, restart.
