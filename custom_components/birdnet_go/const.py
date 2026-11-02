@@ -49,6 +49,10 @@ REST_TIMEOUT = 15
 # fast daily/recent calls so it can complete instead of timing out.
 SUMMARY_TIMEOUT = 60
 SSE_CONNECT_TIMEOUT = 15
+# The daily endpoint occasionally stalls past REST_TIMEOUT while BirdNET-Go
+# holds a SQLite write lock. Keep the last good values for this many
+# consecutive failed polls (5 min each) before marking the host unavailable.
+DAILY_FAILURE_TOLERANCE = 3
 
 
 def build_base_url(host: str) -> str:

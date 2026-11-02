@@ -36,6 +36,7 @@ from .const import (
     API_PATH_RECENT,
     API_PATH_STREAM,
     API_PATH_SUMMARY,
+    DAILY_FAILURE_TOLERANCE,
     REST_TIMEOUT,
     SCAN_INTERVAL_DAILY,
     SCAN_INTERVAL_SUMMARY,
@@ -95,6 +96,7 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         self._sse_task: asyncio.Task | None = None
         self._last_summary_fetch: datetime | None = None
+        self._daily_failures = 0
 
     # ------------------------------------------------------------------
     # REST polling
@@ -112,9 +114,22 @@ class BirdNetGoCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 daily_to_fields(await self._get_json(API_PATH_DAILY), self._base_url)
             )
         except (TimeoutError, aiohttp.ClientError) as err:
+            self._daily_failures += 1
+            reason = str(err) or type(err).__name__
+            # A single stalled poll must not blank the panel: keep the last
+            # good values until the host has failed several polls in a row.
+            if data["available"] and self._daily_failures < DAILY_FAILURE_TOLERANCE:
+                _LOGGER.debug(
+                    "BirdNET-Go daily fetch failed (%s/%s), keeping last values: %s",
+                    self._daily_failures,
+                    DAILY_FAILURE_TOLERANCE,
+                    reason,
+                )
+                return data
             raise UpdateFailed(
-                f"BirdNET-Go host {self._base_url} unreachable: {err}"
+                f"BirdNET-Go host {self._base_url} unreachable: {reason}"
             ) from err
+        self._daily_failures = 0
 
         # All-time summary is a heavy analytics query (full table scan on large
         # databases) that can take tens of seconds, especially behind a reverse

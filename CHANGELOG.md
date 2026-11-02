@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.2] - 2026-11-02
+
+### Fixed
+- A single slow poll no longer blanks the whole panel. The daily stats call
+  occasionally stalls past the 15 s timeout (BirdNET-Go holding a SQLite write
+  lock), and each stall made every entity `unavailable` for a full 5-minute
+  poll cycle, several times a day. The coordinator now keeps the last good
+  values for up to two consecutive failed polls and only marks the host
+  unavailable on the third. The error message also names the exception type
+  instead of ending in an empty string on a timeout.
+
 ## [1.12.1] - 2026-10-19
 
 ### Fixed
