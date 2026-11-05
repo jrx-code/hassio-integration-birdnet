@@ -1,6 +1,7 @@
 {
   "domain": "birdnet_go",
   "name": "BirdNET-Go",
+  "categories": ["local_services"],
   "codeowners": ["@jrx-code"],
   "config_flow": true,
   "dependencies": ["frontend", "http", "lovelace"],
@@ -9,5 +10,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/jrx-code/hassio-integration-birdnet/issues",
   "requirements": [],
-  "version": "1.12.2"
+  "version": "1.12.3"
 }

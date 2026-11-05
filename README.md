@@ -99,7 +99,7 @@ It finds its entities by scanning the entity registry for `platform: birdnet_go`
 ### HACS
 [![Open your Home Assistant instance and open this repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=jrx-code&repository=hassio-integration-birdnet&category=integration)
 
-1. HACS → search for **BirdNET-Go** (it is in the HACS default store, no custom repository needed)
+1. HACS (or the Marketplace on Home Assistant 2026.11+) → search for **BirdNET-Go** (it is in the default store, no custom repository needed)
 2. Download it, restart Home Assistant
 
 ### Manual

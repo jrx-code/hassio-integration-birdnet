@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.12.3] - 2026-11-05
+
+### Added
+- Manifest declares `categories` (Local services), so the Home Assistant 2026.11 Marketplace lists the integration under that category. No functional change.
+
 ## [1.12.2] - 2026-11-02
 
 ### Fixed
